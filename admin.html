@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Painel do estúdio | Pratique + Pilates</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css?v=14" />
+  </head>
+  <body class="admin-body">
+    <div id="login-screen" class="admin-login" hidden>
+      <form id="form-admin-login" class="contact-form login-card" novalidate>
+        <img class="login-logo" src="img/logo-pilates.png" alt="Pratique + Pilates" />
+        <p class="eyebrow">Equipe</p>
+        <h1>Painel do estúdio</h1>
+        <p class="muted">Acesso exclusivo da administração. Cadastro, agenda, financeiro e matrículas.</p>
+        <label>E-mail <input type="email" name="email" required autocomplete="username" /></label>
+        <label>Senha <input type="password" name="password" required autocomplete="current-password" /></label>
+        <button class="btn btn-primary" type="submit">Entrar</button>
+        <p class="form-status" id="login-status" role="status"></p>
+      </form>
+    </div>
+
+    <div id="app" class="admin-shell" hidden>
+      <aside class="admin-side">
+        <a class="logo" href="index.html"><img src="img/logo-pilates.png" alt="Pratique + Pilates" /></a>
+        <p class="side-label">Administração</p>
+        <nav class="admin-nav">
+          <button type="button" data-view="inicio" class="is-active">Início</button>
+          <button type="button" data-view="clientes">Alunos</button>
+          <button type="button" data-view="agenda">Agenda</button>
+          <button type="button" data-view="financeiro">Financeiro</button>
+          <button type="button" data-view="planos">Planos</button>
+          <button type="button" data-view="aulas">Aulas</button>
+          <button type="button" data-view="equipe">Instrutores</button>
+        </nav>
+        <div class="side-user">
+          <strong id="admin-name">Admin</strong>
+          <span class="muted" id="admin-email"></span>
+          <button class="btn btn-sair" id="btn-logout" type="button">Sair</button>
+        </div>
+      </aside>
+
+      <div class="admin-main">
+        <header class="admin-top">
+          <div>
+            <p class="eyebrow" id="view-eyebrow">Estúdio</p>
+            <h1 id="view-title">Início</h1>
+          </div>
+          <div class="admin-top-actions" id="view-actions"></div>
+        </header>
+        <section class="admin-content" id="view-root"></section>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-head">
+          <h2 id="modal-title">Detalhe</h2>
+          <button type="button" class="modal-close" id="modal-close" aria-label="Fechar">×</button>
+        </div>
+        <div id="modal-body"></div>
+      </div>
+    </div>
+
+    <script src="js/studio-store.js?v=4"></script>
+    <script src="js/admin.js?v=11"></script>
+  </body>
+</html>
