@@ -1,0 +1,5 @@
+data
+.env
+.git
+*.ps1
+schema.sql

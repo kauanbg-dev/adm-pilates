@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Entrar | Pratique + Pilates</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <p class="test-banner">Ambiente de teste · senha das contas prontas: <strong>teste123</strong></p>
+    <p class="test-banner">Ambiente de teste · senha das contas prontas: <strong>teste123</strong></p>
+      <div class="container nav-wrap">
+        <a class="logo" href="index.html"><img src="img/logo-pilates.png" alt="Pratique + Pilates" /></a>
+        <nav class="site-nav open-always">
+          <a href="index.html">Início</a>
+          <a href="assinatura.html">Assinatura</a>
+          <a href="conta.html" class="nav-cta">Entrar</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container auth-grid">
+        <div>
+          <p class="eyebrow">Área do aluno</p>
+          <h1>Crie sua conta ou entre</h1>
+          <p class="muted">
+            Depois você cadastra um cartão de teste e assina um plano. O número
+            completo do cartão não é gravado — só token, bandeira e os 4 últimos dígitos.
+          </p>
+          <p class="muted">
+            Contas prontas: <code>aluno@teste.com</code> e
+            <code>bia@pratiquepilates.com</code>
+          </p>
+        </div>
+
+        <div class="auth-panels">
+          <form id="form-login" class="contact-form" novalidate>
+            <h2>Entrar</h2>
+            <label>E-mail <input type="email" name="email" required value="aluno@teste.com" /></label>
+            <label>Senha <input type="password" name="password" required value="teste123" /></label>
+            <button class="btn btn-primary" type="submit">Entrar</button>
+            <p class="form-status" data-for="login" role="status"></p>
+          </form>
+
+          <form id="form-register" class="contact-form" novalidate>
+            <h2>Cadastrar</h2>
+            <label>Nome <input type="text" name="name" required /></label>
+            <label>E-mail <input type="email" name="email" required /></label>
+            <label>Senha <input type="password" name="password" required minlength="6" /></label>
+            <button class="btn btn-primary" type="submit">Criar conta</button>
+            <p class="form-status" data-for="register" role="status"></p>
+          </form>
+        </div>
+      </div>
+    </main>
+    <script src="js/api.js"></script>
+    <script src="js/conta.js"></script>
+  </body>
+</html>

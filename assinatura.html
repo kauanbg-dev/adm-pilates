@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Assinatura | Pratique + Pilates</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <p class="test-banner">
+      Cartão aprovado: <strong>4242 4242 4242 4242</strong> · recusado:
+      <strong>4000 0000 0000 0002</strong> · validade futura · CVV qualquer 3 dígitos
+    </p>
+    <header class="site-header">
+      <div class="container nav-wrap">
+        <a class="logo" href="index.html"><img src="img/logo-pilates.png" alt="Pratique + Pilates" /></a>
+        <nav class="site-nav open-always">
+          <a href="index.html">Início</a>
+          <button class="linkish" id="btn-sair" type="button">Sair</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow">Minha conta</p>
+          <h1 id="hello">Olá</h1>
+          <p class="muted" id="hello-email"></p>
+        </header>
+
+        <div class="app-grid">
+          <section class="panel" id="painel-assinatura">
+            <h2>Assinatura</h2>
+            <p id="sub-status" class="muted">Carregando…</p>
+            <button class="btn btn-ghost-dark" id="btn-cancelar" type="button" hidden>Cancelar assinatura</button>
+          </section>
+
+          <section class="panel">
+            <h2>Planos</h2>
+            <div id="planos" class="plan-list"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Cartão de teste</h2>
+            <p class="muted">O servidor guarda só um token, a bandeira e os 4 últimos dígitos.</p>
+            <div id="cards"></div>
+            <form id="form-cartao" class="contact-form nested" novalidate>
+              <label>Nome no cartão <input name="holder" required placeholder="ALUNO TESTE" /></label>
+              <label>Número <input name="number" inputmode="numeric" autocomplete="off" required placeholder="4242 4242 4242 4242" /></label>
+              <div class="row-2">
+                <label>Mês <input name="expMonth" type="number" min="1" max="12" required value="12" /></label>
+                <label>Ano <input name="expYear" type="number" min="2026" required value="2028" /></label>
+              </div>
+              <label>CVV <input name="cvv" inputmode="numeric" autocomplete="off" required maxlength="4" placeholder="123" /></label>
+              <button class="btn btn-primary" type="submit">Tokenizar cartão</button>
+              <p class="form-status" role="status"></p>
+            </form>
+          </section>
+
+          <section class="panel">
+            <h2>Cobranças</h2>
+            <div id="pagamentos" class="muted">Nenhuma cobrança ainda.</div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <script src="js/api.js"></script>
+    <script src="js/assinatura.js"></script>
+  </body>
+</html>
