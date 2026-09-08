@@ -4,17 +4,23 @@ import { fileURLToPath } from "node:url";
 import { GATE_COOKIE, gateCookieHeader, parseCookie, readGate, secretsEqual, signGate } from "../lib/auth.js";
 import { sessionSecret } from "../lib/store.js";
 
-const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+const panelRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+function dataDir() {
+  const local = path.join(panelRoot, "data");
+  const repo = path.join(panelRoot, "..", "data");
+  return fs.existsSync(local) ? local : repo;
+}
 
 function accessKey() {
   if (process.env.ADMIN_ACCESS_KEY) return process.env.ADMIN_ACCESS_KEY.trim();
-  const file = path.join(root, "data", "access.key");
+  const file = path.join(dataDir(), "access.key");
   if (fs.existsSync(file)) return fs.readFileSync(file, "utf8").trim();
   return "";
 }
 
 function send404(res) {
-  const fallback = path.join(root, "404.html");
+  const fallback = path.join(panelRoot, "404.html");
   const html = fs.existsSync(fallback)
     ? fs.readFileSync(fallback)
     : Buffer.from("Não encontrado.", "utf8");
@@ -36,7 +42,7 @@ export default async function handler(req, res) {
     send404(res);
     return;
   }
-  const page = path.join(root, "admin.html");
+  const page = path.join(panelRoot, "admin.html");
   if (!fs.existsSync(page)) {
     send404(res);
     return;
