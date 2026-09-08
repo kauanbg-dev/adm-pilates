@@ -716,15 +716,28 @@ textarea {
 }
 
 .site-footer {
-  padding: 2rem 0 2.5rem;
+  padding: 2.2rem 0 2.4rem;
   border-top: 1px solid var(--line);
 }
 
 .footer-wrap {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.7rem;
   color: var(--muted);
+}
+
+.footer-wrap p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.footer-logo {
+  width: 72px;
+  height: auto;
+  opacity: 0.9;
 }
 
 @media (max-width: 900px) {
@@ -742,7 +755,7 @@ textarea {
     flex-direction: column;
     padding: 1rem 1.25rem 1.4rem;
     border-bottom: 1px solid var(--line);
-    align-items: flex-start;
+    align-items: stretch;
     max-height: calc(100vh - 72px);
     overflow: auto;
     z-index: 30;
@@ -754,27 +767,76 @@ textarea {
 
   .site-nav a {
     width: 100%;
-    padding: 0.55rem 0;
+    padding: 0.7rem 0;
+  }
+
+  .site-nav .nav-cta {
+    width: 100%;
+    margin-top: 0.45rem;
+    padding: 0.85rem 1.2rem;
+    text-align: center;
+    box-sizing: border-box;
+    white-space: nowrap;
   }
 
   .hero {
-    padding: 6rem 0 2.2rem;
+    padding: 1.25rem 0 2rem;
   }
 
-  .hero-split,
+  .hero-split {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  .hero-logo {
+    order: -1;
+    padding: 1rem;
+    border-radius: 20px;
+  }
+
+  .hero-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.85rem, 8vw, 2.4rem);
+    margin-bottom: 0.45rem;
+  }
+
+  .hero .lead {
+    margin: 0;
+    font-size: 1rem;
+    max-width: none;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+    margin-top: 0.75rem;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    padding: 0.85rem 1.1rem;
+  }
+
   .split,
   .cards,
   .class-grid,
   .team-grid,
   .strip-grid,
   .gallery-grid,
-  .hero-actions,
   .row-2 {
     grid-template-columns: 1fr;
-  }
-
-  .hero-actions .btn {
-    width: 100%;
   }
 
   .hero-logo img {
@@ -814,10 +876,6 @@ textarea {
 
   .section {
     padding: 3.2rem 0;
-  }
-
-  .footer-wrap {
-    flex-direction: column;
   }
 
   table {
@@ -876,53 +934,11 @@ textarea {
   }
 }
 
-.test-banner {
-  margin: 0;
-  padding: 0.55rem 1rem;
-  text-align: center;
-  background: var(--sage);
-  color: var(--white);
-  font-size: 0.85rem;
-}
-
-.auth-grid,
-.app-grid,
-.auth-panels,
-.plan-list {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.auth-grid {
-  grid-template-columns: 0.9fr 1.1fr;
-  align-items: start;
-}
-
-.auth-panels {
-  grid-template-columns: 1fr 1fr;
-}
-
-.app-grid {
-  grid-template-columns: 1fr 1fr;
-}
-
 .panel {
   background: var(--white);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 1.4rem;
-}
-
-.plan-card,
-.card-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 0.9rem 1rem;
-  margin-bottom: 0.75rem;
 }
 
 .contact-form.nested {
@@ -951,33 +967,6 @@ textarea {
   font: inherit;
   text-decoration: underline;
   padding: 0;
-}
-
-.open-always {
-  display: flex !important;
-  position: static !important;
-  background: transparent;
-  border: 0;
-  padding: 0;
-  flex-direction: row;
-  align-items: center;
-}
-
-.pay-list {
-  margin: 0;
-  padding-left: 1.1rem;
-}
-
-@media (max-width: 900px) {
-  .auth-grid,
-  .auth-panels,
-  .app-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .open-always {
-    flex-wrap: wrap;
-  }
 }
 
 .admin-body {
