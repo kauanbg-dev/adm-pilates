@@ -1,16 +1,9 @@
-const CAPACITY = {
-  Solo: 6,
-  Reformer: 4,
-  Terapêutico: 2,
-  "Pré-natal": 4,
-};
-
 function defaultModalities() {
   return [
-    { id: "mod_solo", name: "Solo", capacity: 6, duration: 50, active: true },
-    { id: "mod_reformer", name: "Reformer", capacity: 4, duration: 50, active: true },
-    { id: "mod_terapeutico", name: "Terapêutico", capacity: 2, duration: 45, active: true },
-    { id: "mod_prenatal", name: "Pré-natal", capacity: 4, duration: 45, active: true },
+    { id: "mod_solo", name: "Solo", duration: 50, active: true },
+    { id: "mod_reformer", name: "Reformer", duration: 50, active: true },
+    { id: "mod_terapeutico", name: "Terapêutico", duration: 45, active: true },
+    { id: "mod_prenatal", name: "Pré-natal", duration: 45, active: true },
   ];
 }
 
@@ -20,6 +13,12 @@ function defaultTimes() {
 
 function ensureCatalog(db) {
   if (!Array.isArray(db.modalities) || !db.modalities.length) db.modalities = defaultModalities();
+  db.modalities = db.modalities.map((m) => {
+    if (!m || typeof m !== "object") return m;
+    const next = { ...m };
+    delete next.capacity;
+    return next;
+  });
   if (!Array.isArray(db.times) || !db.times.length) db.times = defaultTimes();
   db.times = [...new Set(db.times)].sort();
   db.instructors = (db.instructors || []).map((i, index) => ({
@@ -128,22 +127,5 @@ const Studio = {
 
   instructor(db, id) {
     return db.instructors.find((i) => i.id === id);
-  },
-
-  occupancy(db, date, time, modality, exceptId) {
-    return db.appointments.filter(
-      (a) =>
-        a.date === date &&
-        a.time === time &&
-        a.modality === modality &&
-        a.status !== "cancelado" &&
-        a.id !== exceptId
-    ).length;
-  },
-
-  maxFor(db, modality) {
-    const found = (db.modalities || []).find((m) => m.name === modality);
-    if (found) return Number(found.capacity) || 6;
-    return CAPACITY[modality] || 6;
   },
 };
