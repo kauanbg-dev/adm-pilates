@@ -1,6 +1,7 @@
 const toggle = document.querySelector(".nav-toggle");
 const nav = document.querySelector(".site-nav");
 const scrim = document.querySelector("#nav-scrim");
+const navLinks = document.querySelectorAll(".nav-links a");
 
 function setMenu(open) {
   if (!toggle || !nav) return;
@@ -24,6 +25,22 @@ if (toggle && nav) {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") setMenu(false);
   });
+}
+
+if (navLinks.length && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const sectionIds = [...navLinks].map((a) => a.getAttribute("href")).filter((href) => href && href.startsWith("#"));
+  const sections = sectionIds.map((href) => document.querySelector(href)).filter(Boolean);
+  if (sections.length) {
+    const ioNav = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!visible) return;
+        navLinks.forEach((a) => a.classList.toggle("is-active", a.getAttribute("href") === `#${visible.target.id}`));
+      },
+      { rootMargin: "-35% 0px -55% 0px", threshold: [0, 0.2, 0.5] }
+    );
+    sections.forEach((section) => ioNav.observe(section));
+  }
 }
 
 const revealTargets = document.querySelectorAll(

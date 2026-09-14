@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css?v=23" />
+    <link rel="stylesheet" href="css/styles.css?v=24" />
   </head>
   <body>
     <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -26,13 +26,15 @@
           <span class="sr-only">Abrir menu</span>
           <span class="bars" aria-hidden="true"><span></span><span></span><span></span></span>
         </button>
-        <nav id="menu" class="site-nav">
-          <a href="#sobre">O método</a>
-          <a href="#beneficios">Benefícios</a>
-          <a href="#equipe">Equipe</a>
-          <a href="#galeria">Galeria</a>
-          <a href="#local">Local</a>
-          <a href="#horarios">Horários</a>
+        <nav id="menu" class="site-nav" aria-label="Seções do site">
+          <div class="nav-links">
+            <a href="#sobre">O método</a>
+            <a href="#beneficios">Benefícios</a>
+            <a href="#equipe">Equipe</a>
+            <a href="#galeria">Galeria</a>
+            <a href="#horarios">Horários</a>
+            <a href="#local">Local</a>
+          </div>
           <a href="#local" class="nav-cta">Aula experimental</a>
         </nav>
       </div>
@@ -153,22 +155,6 @@
         </div>
       </section>
 
-      <section id="horarios" class="section schedule">
-        <div class="container">
-          <header class="section-head">
-            <p class="eyebrow">Atendimento</p>
-            <h2>Horários</h2>
-            <p class="muted">Segunda a quinta, das 8h às 19h.</p>
-          </header>
-          <div class="cards">
-            <article class="card"><h3>Segunda</h3><p>08:00 às 19:00</p></article>
-            <article class="card"><h3>Terça</h3><p>08:00 às 19:00</p></article>
-            <article class="card"><h3>Quarta</h3><p>08:00 às 19:00</p></article>
-            <article class="card"><h3>Quinta</h3><p>08:00 às 19:00</p></article>
-          </div>
-        </div>
-      </section>
-
       <section id="galeria" class="section benefits">
         <div class="container">
           <header class="section-head">
@@ -194,6 +180,22 @@
             <figure class="shot shot-turma">
               <img src="img/alunos3.png" alt="Turma no estúdio" />
             </figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="horarios" class="section schedule">
+        <div class="container">
+          <header class="section-head">
+            <p class="eyebrow">Atendimento</p>
+            <h2>Horários</h2>
+            <p class="muted">Segunda a quinta, das 8h às 19h.</p>
+          </header>
+          <div class="cards">
+            <article class="card"><h3>Segunda</h3><p>08:00 às 19:00</p></article>
+            <article class="card"><h3>Terça</h3><p>08:00 às 19:00</p></article>
+            <article class="card"><h3>Quarta</h3><p>08:00 às 19:00</p></article>
+            <article class="card"><h3>Quinta</h3><p>08:00 às 19:00</p></article>
           </div>
         </div>
       </section>
@@ -292,6 +294,6 @@
       </svg>
     </a>
 
-    <script src="js/main.js?v=5"></script>
+    <script src="js/main.js?v=6"></script>
   </body>
 </html>
