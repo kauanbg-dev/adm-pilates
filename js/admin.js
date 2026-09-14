@@ -2,15 +2,19 @@ const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const titles = {
   inicio: ["Painel", "Como está o estúdio hoje"],
-  clientes: ["Alunos", "Cadastro, planos e cancelamento de matrícula"],
+  clientes: ["Alunos", "Cadastro e cancelamento de matrícula"],
   agenda: ["Agenda", "Agende, edite, remova e marque aula experimental"],
-  financeiro: ["Financeiro", "Mensalidades, despesas e caixa do mês"],
-  planos: ["Planos", "Valores e modalidades oferecidas"],
+  financeiro: ["Financeiro", "Aulas, despesas e caixa do mês"],
+  valor: ["Valor", "Um único valor por aula"],
   aulas: ["Aulas", "Formas de aula, vagas, duração e horários da grade"],
   equipe: ["Instrutores", "Quem conduz as aulas"],
 };
 
-let db = { instructors: [], plans: [], clients: [], appointments: [], transactions: [], modalities: [], times: [] };
+function emptyStudio() {
+  return { instructors: [], plans: [], clients: [], appointments: [], transactions: [], modalities: [], times: [], classPrice: 80 };
+}
+
+let db = emptyStudio();
 let currentUser = null;
 let view = "inicio";
 let weekOffset = 0;
@@ -111,8 +115,27 @@ function instructorName(id) {
   return Studio.instructor(db, id)?.name || "—";
 }
 
-function planName(id) {
-  return Studio.plan(db, id)?.name || "Sem plano";
+function isBillable(apt) {
+  return Boolean(apt) && apt.kind !== "experimental" && apt.status !== "cancelado";
+}
+
+function chargeAppointment(apt) {
+  if (!isBillable(apt)) return false;
+  const price = Studio.classPrice(db);
+  if (!(price > 0)) return false;
+  if (db.transactions.some((t) => t.appointmentId === apt.id)) return false;
+  db.transactions.push({
+    id: uid("fin"),
+    type: "receita",
+    category: "Aula",
+    description: `Aula · ${personLabel(apt)} · ${formatDate(apt.date)} ${apt.time}`,
+    amount: price,
+    date: apt.date,
+    status: "pendente",
+    clientId: apt.clientId || "",
+    appointmentId: apt.id,
+  });
+  return true;
 }
 
 function statusChip(status) {
@@ -194,6 +217,8 @@ async function showApp() {
 }
 
 function render() {
+  if (view === "planos") view = "valor";
+  if (!titles[view]) view = "inicio";
   if (isStaff() && view === "financeiro") view = "inicio";
   applyRoleUi();
   const [eyebrow, title] = titles[view];
@@ -211,10 +236,10 @@ function render() {
   } else if (view === "financeiro") {
     actions.innerHTML = isStaff()
       ? ""
-      : `<button class="btn btn-ghost-dark" type="button" data-action="gerar-mensalidades">Gerar mensalidades do mês</button>
+      : `<button class="btn btn-ghost-dark" type="button" data-action="gerar-aulas">Gerar cobranças das aulas</button>
       <button class="btn btn-primary" type="button" data-action="novo-lancamento">Novo lançamento</button>`;
-  } else if (view === "planos") {
-    actions.innerHTML = `<button class="btn btn-primary" type="button" data-action="novo-plano">Novo plano</button>`;
+  } else if (view === "valor") {
+    actions.innerHTML = isStaff() ? "" : `<button class="btn btn-primary" type="button" data-action="editar-valor">Alterar valor</button>`;
   } else if (view === "aulas") {
     actions.innerHTML = `<button class="btn btn-ghost-dark" type="button" data-action="novo-horario">Novo horário</button>
       <button class="btn btn-primary" type="button" data-action="nova-modalidade">Nova forma de aula</button>`;
@@ -228,7 +253,7 @@ function render() {
   if (view === "clientes") renderClients();
   if (view === "agenda") renderAgenda();
   if (view === "financeiro") renderFinance();
-  if (view === "planos") renderPlans();
+  if (view === "valor") renderValor();
   if (view === "aulas") renderAulas();
   if (view === "equipe") renderTeam();
 }
@@ -260,7 +285,7 @@ function renderHome() {
             ? `<ul class="plain-list">${atrasados
                 .map((t) => `<li>${t.description}<br /><span class="muted">${money(t.amount)} · venc. ${formatDate(t.date)}</span></li>`)
                 .join("")}</ul>`
-            : `<p class="muted">Nenhuma mensalidade em atraso.</p>`
+            : `<p class="muted">Nenhuma cobrança de aula em atraso.</p>`
         }
         <p class="muted" style="margin-top:1rem">${cancelados.length} matrícula(s) cancelada(s) no histórico.</p>
       </section>`;
@@ -320,7 +345,6 @@ function renderClients() {
         <thead>
           <tr>
             <th>Aluno</th>
-            <th>Plano</th>
             <th>Instrutor</th>
             <th>Status</th>
             <th>Início</th>
@@ -335,7 +359,6 @@ function renderClients() {
                     (c) => `
             <tr>
               <td data-label="Aluno">${escapeHtml(c.name)}<br /><span class="muted">${escapeHtml(c.email)} · ${escapeHtml(c.phone || "—")}</span></td>
-              <td data-label="Plano">${escapeHtml(planName(c.planId))}</td>
               <td data-label="Instrutor">${escapeHtml(instructorName(c.instructorId))}</td>
               <td data-label="Status">${statusChip(c.status)}</td>
               <td data-label="Início">${formatDate(c.startedAt)}</td>
@@ -351,7 +374,7 @@ function renderClients() {
             </tr>`
                   )
                   .join("")
-              : `<tr><td colspan="6">Nenhum aluno encontrado.</td></tr>`
+              : `<tr><td colspan="5">Nenhum aluno encontrado.</td></tr>`
           }
         </tbody>
       </table>
@@ -365,7 +388,6 @@ function clientForm(c) {
     name: "",
     email: "",
     phone: "",
-    planId: db.plans[0]?.id || "",
     instructorId: db.instructors[0]?.id || "",
     notes: "",
     status: "ativo",
@@ -378,19 +400,11 @@ function clientForm(c) {
         <label>E-mail <input type="email" name="email" required value="${escapeAttr(value.email)}" /></label>
         <label>WhatsApp <input name="phone" required value="${escapeAttr(value.phone)}" /></label>
       </div>
-      <div class="row-2">
-        <label>Plano
-          <select name="planId">${db.plans
-            .filter((p) => p.active || p.id === value.planId)
-            .map((p) => `<option value="${p.id}" ${p.id === value.planId ? "selected" : ""}>${escapeHtml(p.name)} · ${money(p.price)}</option>`)
-            .join("")}</select>
-        </label>
-        <label>Instrutor de referência
-          <select name="instructorId">${db.instructors
-            .map((i) => `<option value="${i.id}" ${i.id === value.instructorId ? "selected" : ""}>${escapeHtml(i.name)}</option>`)
-            .join("")}</select>
-        </label>
-      </div>
+      <label>Instrutor de referência
+        <select name="instructorId">${db.instructors
+          .map((i) => `<option value="${i.id}" ${i.id === value.instructorId ? "selected" : ""}>${escapeHtml(i.name)}</option>`)
+          .join("")}</select>
+      </label>
       <label>Observações clínicas / objetivas
         <textarea name="notes" rows="3">${escapeHtml(value.notes || "")}</textarea>
       </label>
@@ -407,7 +421,6 @@ function openNewClient() {
       name: String(fd.get("name")).trim(),
       email: String(fd.get("email")).trim().toLowerCase(),
       phone: String(fd.get("phone")).trim(),
-      planId: String(fd.get("planId")),
       instructorId: String(fd.get("instructorId")),
       notes: String(fd.get("notes") || "").trim(),
       status: "ativo",
@@ -418,19 +431,6 @@ function openNewClient() {
       return;
     }
     db.clients.push(client);
-    const plan = Studio.plan(db, client.planId);
-    if (plan) {
-      db.transactions.push({
-        id: uid("fin"),
-        type: "receita",
-        category: "Mensalidade",
-        description: `${plan.name} · ${client.name}`,
-        amount: plan.price,
-        date: todayIso(),
-        status: "pendente",
-        clientId: client.id,
-      });
-    }
     persist();
     closeModal();
     view = "clientes";
@@ -446,7 +446,6 @@ function openEditClient(id) {
     c.name = String(fd.get("name")).trim();
     c.email = String(fd.get("email")).trim().toLowerCase();
     c.phone = String(fd.get("phone")).trim();
-    c.planId = String(fd.get("planId"));
     c.instructorId = String(fd.get("instructorId"));
     c.notes = String(fd.get("notes") || "").trim();
     persist();
@@ -461,7 +460,7 @@ function openCancelClient(id) {
   openModal(
     "Cancelar matrícula",
     `
-    <p>Cancelar <strong>${escapeHtml(c.name)}</strong> encerra a matrícula, cancela aulas futuras e não gera novas mensalidades.</p>
+    <p>Cancelar <strong>${escapeHtml(c.name)}</strong> encerra a matrícula, cancela aulas futuras e não gera novas cobranças de aula.</p>
     <form id="form-cancel" class="contact-form nested">
       <label>Motivo
         <textarea name="reason" rows="3" required placeholder="Ex.: mudança de cidade, lesão, financeiro…"></textarea>
@@ -868,7 +867,7 @@ function openLancamento(existing) {
         </select>
       </label>
       <div class="row-2">
-        <label>Categoria <input name="category" required placeholder="Mensalidade, aluguel, material…" value="${escapeAttr(t.category)}" /></label>
+        <label>Categoria <input name="category" required placeholder="Aula, aluguel, material…" value="${escapeAttr(t.category)}" /></label>
         <label>Valor (R$) <input name="amount" type="number" min="0" step="0.01" required value="${escapeAttr(t.amount)}" /></label>
       </div>
       <label>Descrição <input name="description" required value="${escapeAttr(t.description)}" /></label>
@@ -910,142 +909,67 @@ function openDeleteLancamento(id) {
   );
 }
 
-function generateDues() {
+function generateClassCharges() {
   if (isStaff()) return;
+  const price = Studio.classPrice(db);
+  if (!(price > 0)) {
+    openModal("Cobranças das aulas", `<p>Defina o valor da aula antes de gerar as cobranças.</p>`);
+    return;
+  }
   const month = currentMonth();
   let created = 0;
-  db.clients
-    .filter((c) => c.status === "ativo")
-    .forEach((c) => {
-      const exists = db.transactions.some(
-        (t) => t.clientId === c.id && t.category === "Mensalidade" && monthKey(t.date) === month
-      );
-      if (exists) return;
-      const plan = Studio.plan(db, c.planId);
-      if (!plan) return;
-      db.transactions.push({
-        id: uid("fin"),
-        type: "receita",
-        category: "Mensalidade",
-        description: `${plan.name} · ${c.name}`,
-        amount: plan.price,
-        date: `${month}-01`,
-        status: "pendente",
-        clientId: c.id,
-      });
-      created += 1;
+  db.appointments
+    .filter((a) => monthKey(a.date) === month && isBillable(a))
+    .forEach((a) => {
+      if (chargeAppointment(a)) created += 1;
     });
   persist();
-  openModal("Mensalidades", `<p>${created ? `${created} cobrança(s) gerada(s) para o mês.` : "Todos os alunos ativos já têm mensalidade neste mês."}</p>`);
+  openModal(
+    "Cobranças das aulas",
+    `<p>${created ? `${created} cobrança(s) gerada(s) no valor de ${money(price)} por aula.` : "Todas as aulas do mês já têm cobrança."}</p>`
+  );
   render();
 }
 
-function renderPlans() {
+function renderValor() {
+  const price = Studio.classPrice(db);
   root.innerHTML = `
-    <div class="cards admin-cards">
-      ${db.plans
-        .map(
-          (p) => `<article class="card">
-            <h3>${escapeHtml(p.name)}</h3>
-            <p class="kpi-price">${money(p.price)}<span> / mês</span></p>
-            <p>${escapeHtml(p.modality)} · ${p.weekly}x por semana</p>
-            <p>${p.active ? statusChip("ativo") : statusChip("inativo")}</p>
-            <p class="muted">${db.clients.filter((c) => c.planId === p.id && c.status === "ativo").length} alunos neste plano</p>
-            <div class="inline-actions">
-              <button class="linkish" type="button" data-action="editar-plano" data-id="${p.id}">Editar</button>
-              <button class="linkish" type="button" data-action="toggle-plano" data-id="${p.id}">${p.active ? "Desativar" : "Reativar"}</button>
-              <button class="linkish danger" type="button" data-action="excluir-plano" data-id="${p.id}">Excluir</button>
-            </div>
-          </article>`
-        )
-        .join("")}
-    </div>
+    <section class="panel valor-panel">
+      <h2>Valor da aula</h2>
+      <p class="muted">Não há planos nem pacotes. Todas as aulas usam o mesmo valor, em qualquer modalidade.</p>
+      <p class="kpi-price">${money(price)}<span> / aula</span></p>
+      ${
+        isStaff()
+          ? ""
+          : `<div class="inline-actions">
+              <button class="btn btn-primary" type="button" data-action="editar-valor">Alterar valor</button>
+            </div>`
+      }
+    </section>
   `;
 }
 
-function openPlan(existing) {
-  const p = existing || { name: "", price: "", weekly: 2, modality: "Solo", active: true };
+function openClassPrice() {
+  if (isStaff()) return;
   openModal(
-    existing ? "Editar plano" : "Novo plano",
+    "Valor da aula",
     `
-    <form id="form-plano" class="contact-form nested">
-      <label>Nome <input name="name" required placeholder="Ex.: Duo reformer" value="${escapeAttr(p.name)}" /></label>
-      <div class="row-2">
-        <label>Valor mensal <input name="price" type="number" min="0" step="0.01" required value="${escapeAttr(p.price)}" /></label>
-        <label>Aulas por semana <input name="weekly" type="number" min="1" max="7" required value="${escapeAttr(p.weekly)}" /></label>
-      </div>
-      <label>Modalidade
-        <select name="modality">${formatNames(false, p.modality).map((m) => `<option ${m === p.modality ? "selected" : ""}>${m}</option>`).join("")}</select>
+    <form id="form-valor" class="contact-form nested">
+      <label>Valor por aula (R$)
+        <input name="classPrice" type="number" min="0" step="0.01" required value="${escapeAttr(Studio.classPrice(db))}" />
       </label>
-      ${
-        existing
-          ? `<label>Situação
-              <select name="active">
-                <option value="sim" ${p.active ? "selected" : ""}>Ativo</option>
-                <option value="nao" ${!p.active ? "selected" : ""}>Inativo</option>
-              </select>
-            </label>`
-          : ""
-      }
-      <button class="btn btn-primary" type="submit">${existing ? "Salvar" : "Criar plano"}</button>
+      <p class="muted">Esse valor vale para todas as aulas. Aulas experimentais não geram cobrança.</p>
+      <button class="btn btn-primary" type="submit">Salvar</button>
     </form>
   `
   );
-  bindForm("#form-plano", (fd) => {
-    const data = {
-      name: String(fd.get("name")).trim(),
-      price: Number(fd.get("price")),
-      weekly: Number(fd.get("weekly")),
-      modality: String(fd.get("modality")),
-      active: existing ? fd.get("active") === "sim" : true,
-    };
-    if (existing) Object.assign(existing, data);
-    else db.plans.push({ id: uid("plan"), ...data });
-    persist();
-    closeModal();
-    render();
-  });
-}
-
-function openNewPlan() {
-  openPlan(null);
-}
-
-function openDeletePlan(id) {
-  const p = db.plans.find((x) => x.id === id);
-  if (!p) return;
-  const ativos = db.clients.filter((c) => c.planId === p.id && c.status === "ativo");
-  const outros = db.plans.filter((x) => x.id !== p.id);
-  if (ativos.length && !outros.length) {
-    openModal(
-      "Excluir plano",
-      `<p>Não dá para apagar <strong>${escapeHtml(p.name)}</strong> enquanto houver alunos nele e não existir outro plano para mover a matrícula.</p>`
-    );
-    return;
-  }
-  openModal(
-    "Excluir plano",
-    `
-    <p>Apagar <strong>${escapeHtml(p.name)}</strong>?</p>
-    ${
-      ativos.length
-        ? `<p class="muted">${ativos.length} aluno(s) ativo(s) estão neste plano. Escolha para onde movê-los.</p>
-           <form id="form-excluir-plano" class="contact-form nested">
-             <label>Mover alunos para
-               <select name="moveTo">${outros.map((x) => `<option value="${x.id}">${escapeHtml(x.name)}</option>`).join("")}</select>
-             </label>
-             <button class="btn btn-danger" type="submit">Mover e excluir</button>
-           </form>`
-        : `<button class="btn btn-danger" type="button" data-action="confirmar-excluir-plano" data-id="${p.id}">Excluir plano</button>`
+  bindForm("#form-valor", (fd) => {
+    const n = Number(fd.get("classPrice"));
+    if (!Number.isFinite(n) || n < 0) {
+      alert("Informe um valor válido.");
+      return;
     }
-  `
-  );
-  bindForm("#form-excluir-plano", (fd) => {
-    const moveTo = String(fd.get("moveTo"));
-    db.clients.forEach((c) => {
-      if (c.planId === p.id) c.planId = moveTo;
-    });
-    db.plans = db.plans.filter((x) => x.id !== p.id);
+    db.classPrice = n;
     persist();
     closeModal();
     render();
@@ -1189,7 +1113,7 @@ function renderAulas() {
   root.innerHTML = `
     <section class="panel" style="margin-bottom:1.2rem">
       <h2>Formas de aula</h2>
-      <p class="muted">Nome, vagas por horário e duração. Isso vale na agenda e nos planos.</p>
+      <p class="muted">Nome, vagas por horário e duração. Isso vale na agenda.</p>
       <div class="cards admin-cards">
         ${(db.modalities || [])
           .map(
@@ -1274,9 +1198,6 @@ function openModality(existing) {
       const oldName = existing.name;
       Object.assign(existing, data);
       if (oldName !== name) {
-        db.plans.forEach((p) => {
-          if (p.modality === oldName) p.modality = name;
-        });
         db.appointments.forEach((a) => {
           if (a.modality === oldName) a.modality = name;
         });
@@ -1294,11 +1215,10 @@ function openModality(existing) {
 function openDeleteModality(id) {
   const m = (db.modalities || []).find((x) => x.id === id);
   if (!m) return;
-  const usedPlans = db.plans.filter((p) => p.modality === m.name).length;
   const usedApt = db.appointments.filter((a) => a.modality === m.name && a.status !== "cancelado").length;
   const outros = (db.modalities || []).filter((x) => x.id !== id);
-  if ((usedPlans || usedApt) && !outros.length) {
-    openModal("Excluir forma de aula", `<p>Não dá para apagar a última forma de aula enquanto houver planos ou agendamentos nela.</p>`);
+  if (usedApt && !outros.length) {
+    openModal("Excluir forma de aula", `<p>Não dá para apagar a última forma de aula enquanto houver agendamentos nela.</p>`);
     return;
   }
   openModal(
@@ -1306,8 +1226,8 @@ function openDeleteModality(id) {
     `
     <p>Apagar <strong>${escapeHtml(m.name)}</strong>?</p>
     ${
-      usedPlans || usedApt
-        ? `<p class="muted">${usedPlans} plano(s) e ${usedApt} aula(s) serão movidos.</p>
+      usedApt
+        ? `<p class="muted">${usedApt} aula(s) serão movidas.</p>
            <form id="form-excluir-mod" class="contact-form nested">
              <label>Mover para
                <select name="moveTo">${outros.map((x) => `<option value="${x.name}">${escapeHtml(x.name)}</option>`).join("")}</select>
@@ -1320,9 +1240,6 @@ function openDeleteModality(id) {
   );
   bindForm("#form-excluir-mod", (fd) => {
     const moveTo = String(fd.get("moveTo"));
-    db.plans.forEach((p) => {
-      if (p.modality === m.name) p.modality = moveTo;
-    });
     db.appointments.forEach((a) => {
       if (a.modality === m.name) a.modality = moveTo;
     });
@@ -1413,7 +1330,7 @@ document.querySelector("#form-admin-login")?.addEventListener("submit", async (e
 document.querySelector("#btn-logout")?.addEventListener("click", async () => {
   await Studio.logout();
   currentUser = null;
-  db = { instructors: [], plans: [], clients: [], appointments: [], transactions: [], modalities: [], times: [] };
+  db = emptyStudio();
   await showApp();
 });
 
@@ -1437,11 +1354,11 @@ document.querySelector("#view-actions")?.addEventListener("click", (e) => {
     if (isStaff()) return;
     openLancamento(null);
   }
-  if (a === "gerar-mensalidades") {
+  if (a === "gerar-aulas") {
     if (isStaff()) return;
-    generateDues();
+    generateClassCharges();
   }
-  if (a === "novo-plano") openNewPlan();
+  if (a === "editar-valor") openClassPrice();
   if (a === "novo-instrutor") {
     if (isStaff()) return;
     openNewInstructor();
@@ -1503,25 +1420,13 @@ root.addEventListener("click", (e) => {
       render();
     }
   }
-  if (a === "toggle-plano") {
-    const p = db.plans.find((x) => x.id === id);
-    if (p) {
-      p.active = !p.active;
-      persist();
-      render();
-    }
-  }
   if (a === "editar-lancamento") {
     if (isStaff()) return;
     const t = db.transactions.find((x) => x.id === id);
     if (t) openLancamento(t);
   }
   if (a === "excluir-lancamento") openDeleteLancamento(id);
-  if (a === "editar-plano") {
-    const p = db.plans.find((x) => x.id === id);
-    if (p) openPlan(p);
-  }
-  if (a === "excluir-plano") openDeletePlan(id);
+  if (a === "editar-valor") openClassPrice();
   if (a === "excluir-cliente") openDeleteClient(id);
   if (a === "editar-instrutor") {
     const i = db.instructors.find((x) => String(x.id) === String(id));
@@ -1588,6 +1493,7 @@ modalBody.addEventListener("click", (e) => {
     const apt = db.appointments.find((x) => x.id === id);
     if (apt) {
       apt.status = a === "presenca" ? "concluido" : "faltou";
+      if (a === "presenca" || a === "falta") chargeAppointment(apt);
       persist();
       closeModal();
       render();
@@ -1611,6 +1517,7 @@ modalBody.addEventListener("click", (e) => {
   }
   if (a === "confirmar-remover-aula") {
     db.appointments = db.appointments.filter((x) => x.id !== id);
+    db.transactions = db.transactions.filter((t) => !(t.appointmentId === id && t.status === "pendente"));
     persist();
     closeModal();
     render();
@@ -1625,12 +1532,6 @@ modalBody.addEventListener("click", (e) => {
   }
   if (a === "confirmar-excluir-lancamento") {
     db.transactions = db.transactions.filter((x) => x.id !== id);
-    persist();
-    closeModal();
-    render();
-  }
-  if (a === "confirmar-excluir-plano") {
-    db.plans = db.plans.filter((x) => x.id !== id);
     persist();
     closeModal();
     render();
@@ -1670,7 +1571,7 @@ async function boot() {
     try {
       db = await Studio.load();
     } catch {
-      db = { instructors: [], plans: [], clients: [], appointments: [], transactions: [], modalities: [], times: [] };
+      db = emptyStudio();
     }
   }
   await showApp();

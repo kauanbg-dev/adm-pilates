@@ -1175,6 +1175,10 @@ textarea {
   color: var(--muted);
 }
 
+.valor-panel .btn {
+  margin-top: 0.75rem;
+}
+
 .split-admin {
   grid-template-columns: 1fr 1fr;
 }
