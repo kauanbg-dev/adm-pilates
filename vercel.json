@@ -1,12 +1,6 @@
 {
-  "functions": {
-    "api/painel.js": {
-      "includeFiles": "{admin.html,404.html}"
-    }
-  },
   "rewrites": [
-    { "source": "/admin.html", "destination": "/api/painel" },
-    { "source": "/painel", "destination": "/api/painel" },
+    { "source": "/painel", "destination": "/admin.html" },
     { "source": "/data/:path*", "destination": "/404.html" },
     { "source": "/lib/:path*", "destination": "/404.html" },
     { "source": "/api/:path*", "destination": "/api" }
