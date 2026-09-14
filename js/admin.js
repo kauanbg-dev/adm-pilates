@@ -1479,18 +1479,19 @@ document.querySelector("#form-admin-login")?.addEventListener("submit", async (e
   const fd = new FormData(e.target);
   const status = document.querySelector("#login-status");
   status.textContent = "Entrando…";
-  const user = await Studio.login(String(fd.get("email")), String(fd.get("password")));
-  currentUser = user;
-  if (!user) {
-    status.textContent = "E-mail ou senha incorretos.";
-    return;
-  }
   try {
+    const user = await Studio.login(String(fd.get("email")), String(fd.get("password")));
+    currentUser = user;
+    if (!user) {
+      status.textContent = "E-mail ou senha incorretos.";
+      return;
+    }
     db = await Studio.load();
     status.textContent = "";
     await showApp();
   } catch (err) {
-    status.textContent = err.message || "Não foi possível carregar os dados.";
+    currentUser = null;
+    status.textContent = err.message || "E-mail ou senha incorretos.";
   }
 });
 

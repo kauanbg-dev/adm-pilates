@@ -1,4 +1,5 @@
 import "../lib/env.js";
+import { envLoginAccounts, matchEnvLogin } from "../lib/accounts.js";
 import { cookieHeader, parseCookie, readSession, signSession, verifyPassword } from "../lib/auth.js";
 import { mergeStudioWrite, studioForClient } from "../lib/permissions.js";
 import { findUser, initStore, loadStudio, saveStudio, sessionSecret } from "../lib/store.js";
@@ -45,19 +46,56 @@ function send(res, status, body, extraHeaders = {}) {
   res.end(json);
 }
 
-async function currentUser(req) {
-  await initStore();
-  const token = parseCookie(req.headers.cookie || "");
-  const email = readSession(token, sessionSecret());
-  if (!email) return null;
-  const user = await findUser(email);
-  if (!user) return null;
+function requestPath(req) {
+  if (req.pratiqueRoute) return req.pratiqueRoute;
+  const url = new URL(req.url, "http://127.0.0.1");
+  const fromUrl = url.pathname.replace(/\/$/, "") || "/";
+  const matched = String(req.headers["x-matched-path"] || req.headers["x-invoke-path"] || "")
+    .split("?")[0]
+    .replace(/\/$/, "");
+  for (const p of [fromUrl, matched]) {
+    if (!p) continue;
+    if (p === "/api/login" || p === "/login" || p.endsWith("/login")) return "/api/login";
+    if (p === "/api/logout" || p === "/logout" || p.endsWith("/logout")) return "/api/logout";
+    if (p === "/api/me" || p === "/me" || p.endsWith("/me")) return "/api/me";
+    if (p === "/api/studio" || p === "/studio" || p.endsWith("/studio")) return "/api/studio";
+  }
+  return fromUrl;
+}
+
+function publicUser(user) {
   return { name: user.name, email: user.email, role: user.role };
 }
 
+function signIn(res, user) {
+  const token = signSession(user.email, sessionSecret());
+  send(res, 200, { user: publicUser(user) }, { "Set-Cookie": cookieHeader(token) });
+}
+
+async function currentUser(req) {
+  const token = parseCookie(req.headers.cookie || "");
+  let email = "";
+  try {
+    email = readSession(token, sessionSecret());
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+  if (!email) return null;
+  const envHit = envLoginAccounts().find((account) => account.email === email);
+  try {
+    await initStore();
+    const user = await findUser(email);
+    if (user) return publicUser(user);
+  } catch (err) {
+    console.error(err);
+  }
+  if (envHit) return publicUser(envHit);
+  return null;
+}
+
 export default async function handler(req, res) {
-  const url = new URL(req.url, "http://127.0.0.1");
-  const path = url.pathname.replace(/\/$/, "") || "/";
+  const path = requestPath(req);
 
   try {
     if (path === "/api/login" && req.method === "POST") {
@@ -65,15 +103,32 @@ export default async function handler(req, res) {
         send(res, 429, { error: "Muitas tentativas. Espere alguns minutos." });
         return;
       }
-      await initStore();
       const body = await readJson(req);
-      const user = await findUser(String(body.email || ""));
-      if (!user || !verifyPassword(String(body.password || ""), user.salt, user.passwordHash)) {
+      const email = String(body.email || "");
+      const password = String(body.password || "");
+      const envUser = matchEnvLogin(email, password);
+      if (envUser) {
+        try {
+          await initStore();
+        } catch (err) {
+          console.error(err);
+        }
+        signIn(res, envUser);
+        return;
+      }
+      try {
+        await initStore();
+      } catch (err) {
+        console.error(err);
+        send(res, 500, { error: "Login indisponível. Confira e-mail e senha no ambiente." });
+        return;
+      }
+      const user = await findUser(email);
+      if (!user || !verifyPassword(password.trim(), user.salt, user.passwordHash)) {
         send(res, 401, { error: "E-mail ou senha incorretos." });
         return;
       }
-      const token = signSession(user.email, sessionSecret());
-      send(res, 200, { user: { name: user.name, email: user.email, role: user.role } }, { "Set-Cookie": cookieHeader(token) });
+      signIn(res, user);
       return;
     }
 

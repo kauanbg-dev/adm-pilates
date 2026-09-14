@@ -2,8 +2,9 @@ import "../lib/env.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { gateSigningSecret, isValidAccessSecret } from "../lib/accounts.js";
 import { GATE_COOKIE, gateCookieHeader, parseCookie, readGate, secretsEqual, signGate } from "../lib/auth.js";
-import { assertNotPlaceholder } from "../lib/sanitize.js";
+import { isPlaceholderSecret } from "../lib/sanitize.js";
 import { sessionSecret } from "../lib/store.js";
 
 const panelRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -14,19 +15,26 @@ function dataDir() {
   return fs.existsSync(local) ? local : repo;
 }
 
-function accessKey() {
-  if (process.env.ADMIN_ACCESS_KEY) {
-    const key = process.env.ADMIN_ACCESS_KEY.trim();
-    assertNotPlaceholder("ADMIN_ACCESS_KEY", key);
-    return key;
-  }
-  const file = path.join(dataDir(), "access.key");
-  if (fs.existsSync(file)) {
+function fileAccessKey() {
+  try {
+    const file = path.join(dataDir(), "access.key");
+    if (!fs.existsSync(file)) return "";
     const key = fs.readFileSync(file, "utf8").trim();
-    assertNotPlaceholder("ADMIN_ACCESS_KEY", key);
+    if (!key || isPlaceholderSecret(key)) return "";
     return key;
+  } catch {
+    return "";
   }
-  return "";
+}
+
+function accessKey() {
+  return gateSigningSecret() || fileAccessKey();
+}
+
+function allowedAccess(offered) {
+  if (isValidAccessSecret(offered)) return true;
+  const fileKey = fileAccessKey();
+  return Boolean(fileKey) && secretsEqual(String(offered || "").trim(), fileKey);
 }
 
 function send404(res) {
@@ -39,7 +47,9 @@ function send404(res) {
 }
 
 function sendGateForm(res, invalid = false) {
-  const msg = invalid ? "<p>Código inválido.</p>" : "<p>Digite o código de acesso do estúdio.</p>";
+  const msg = invalid
+    ? "<p>Código ou senha inválidos.</p>"
+    : "<p>Use o código do estúdio ou a senha de acesso da Bia ou do Alex.</p>";
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
@@ -59,7 +69,7 @@ function sendGateForm(res, invalid = false) {
   <body>
     <form method="post" action="/admin.html">
       ${msg}
-      <label>Código <input type="password" name="k" required autocomplete="off" /></label>
+      <label>Senha de acesso <input type="password" name="k" required autocomplete="off" /></label>
       <button type="submit">Entrar</button>
     </form>
   </body>
@@ -121,13 +131,7 @@ function redirectClean(res) {
 
 export default async function handler(req, res) {
   const url = new URL(req.url, "http://127.0.0.1");
-  let key = "";
-  try {
-    key = accessKey();
-  } catch {
-    send404(res);
-    return;
-  }
+  const key = accessKey();
   if (!key) {
     send404(res);
     return;
@@ -141,7 +145,7 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     const offered = keyFromBody(await readBody(req));
-    if (secretsEqual(offered, key)) {
+    if (allowedAccess(offered)) {
       redirectClean(res);
       return;
     }
@@ -150,7 +154,7 @@ export default async function handler(req, res) {
   }
 
   const offered = url.searchParams.get("k") || url.searchParams.get("acesso") || "";
-  if (secretsEqual(offered, key)) {
+  if (allowedAccess(offered)) {
     redirectClean(res);
     return;
   }
