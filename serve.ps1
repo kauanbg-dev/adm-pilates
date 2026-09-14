@@ -121,63 +121,7 @@ function Test-PublicPath([string]$rel) {
   if ($norm.StartsWith('lib/') -or $norm -eq 'lib') { return $false }
   if ($norm.EndsWith('.ps1') -or $norm.EndsWith('.sql')) { return $false }
   if ($norm -eq 'package.json' -or $norm -eq 'package-lock.json' -or $norm -eq 'vercel.json') { return $false }
-  if ($norm -eq 'admin.html' -or $norm -eq 'painel') { return $false }
   $true
-}
-
-function Get-AccessSecrets {
-  $list = New-Object System.Collections.Generic.List[string]
-  $placeholders = @(
-    'troque-por-um-texto-longo-e-aleatorio',
-    'escolha-uma-senha-forte',
-    'escolha-uma-senha-forte-do-alex',
-    'um-codigo-secreto-so-da-bia'
-  )
-  function Add-Secret([string]$value) {
-    if ([string]::IsNullOrWhiteSpace($value)) { return }
-    $trimmed = $value.Trim()
-    if ($placeholders -contains $trimmed) { return }
-    if (-not $list.Contains($trimmed)) { [void]$list.Add($trimmed) }
-  }
-  Add-Secret $env:ADMIN_ACCESS_KEY
-  Add-Secret $env:ADMIN_PASSWORD
-  Add-Secret $env:ALEX_PASSWORD
-  $fileKey = Get-AccessKeyFromFile
-  if ($fileKey) { Add-Secret $fileKey }
-  ,$list
-}
-
-function Get-AccessKeyFromFile {
-  $keyFile = Join-Path $DataDir 'access.key'
-  if (-not (Test-Path $keyFile)) { return '' }
-  $key = [IO.File]::ReadAllText($keyFile).Trim()
-  if ($key -eq 'um-codigo-secreto-so-da-bia') { return '' }
-  $key
-}
-
-function Get-AccessKey {
-  if ($env:ADMIN_ACCESS_KEY) {
-    $key = $env:ADMIN_ACCESS_KEY.Trim()
-    if ($key -and $key -ne 'um-codigo-secreto-so-da-bia') { return $key }
-  }
-  $secrets = Get-AccessSecrets
-  if ($secrets.Count -gt 0) { return $secrets[0] }
-  $fileKey = Get-AccessKeyFromFile
-  if ($fileKey) { return $fileKey }
-  if (-not (Test-Path $DataDir)) { New-Item -ItemType Directory -Path $DataDir | Out-Null }
-  $raw = [Convert]::ToBase64String((New-SaltBytes)).Replace('+', '').Replace('/', '').Replace('=', '')
-  if ($raw.Length -gt 18) { $raw = $raw.Substring(0, 18) }
-  $keyFile = Join-Path $DataDir 'access.key'
-  [IO.File]::WriteAllText($keyFile, $raw, (New-Object Text.UTF8Encoding $false))
-  $raw
-}
-
-function Test-AccessSecret([string]$offered) {
-  $ok = $false
-  foreach ($secret in (Get-AccessSecrets)) {
-    if (Test-SecretEqual $offered.Trim() $secret) { $ok = $true }
-  }
-  $ok
 }
 
 function Match-EnvLogin([string]$email, [string]$password) {
@@ -207,80 +151,6 @@ function Match-EnvLogin([string]$email, [string]$password) {
   $null
 }
 
-function Send-GateForm($Res, [bool]$invalid = $false) {
-  $msg = if ($invalid) {
-    '<p>Código ou senha inválidos.</p>'
-  } else {
-    '<p>Use o código do estúdio ou a senha de acesso da Bia ou do Alex.</p>'
-  }
-  $html = @"
-<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex, nofollow" />
-    <title>Acesso</title>
-    <style>
-      body { font-family: Outfit, system-ui, sans-serif; background: #f8f6f2; color: #222; margin: 0; min-height: 100vh; display: grid; place-items: center; }
-      form { background: #fff; padding: 1.6rem; border-radius: 16px; width: min(360px, calc(100% - 2rem)); box-shadow: 0 18px 40px rgba(15,104,100,.12); }
-      label { display: grid; gap: .4rem; font-size: .95rem; }
-      input { font: inherit; padding: .75rem .85rem; border-radius: 10px; border: 1px solid rgba(15,104,100,.16); }
-      button { margin-top: 1rem; width: 100%; border: 0; border-radius: 999px; padding: .8rem 1rem; background: #148882; color: #fff; font: inherit; cursor: pointer; }
-      p { margin: 0 0 1rem; color: #5b5b5b; }
-    </style>
-  </head>
-  <body>
-    <form method="post" action="/admin.html">
-      $msg
-      <label>Senha de acesso <input type="password" name="k" required autocomplete="off" /></label>
-      <button type="submit">Entrar</button>
-    </form>
-  </body>
-</html>
-"@
-  $bytes = [Text.Encoding]::UTF8.GetBytes($html)
-  $Res.StatusCode = 401
-  $Res.Headers.Add('X-Robots-Tag', 'noindex, nofollow')
-  $Res.Headers.Add('Cache-Control', 'no-store')
-  $Res.ContentType = 'text/html; charset=utf-8'
-  $Res.ContentLength64 = $bytes.Length
-  $Res.OutputStream.Write($bytes, 0, $bytes.Length)
-}
-
-function Handle-AdminPage($Req, $Res) {
-  $key = Get-AccessKey
-  $offered = [string]$Req.QueryString['k']
-  if (-not $offered) { $offered = [string]$Req.QueryString['acesso'] }
-  if ($Req.HttpMethod -eq 'POST') {
-    $body = Read-BodyText $Req
-    if ($body) {
-      $parsed = [System.Web.HttpUtility]::ParseQueryString($body)
-      if ($parsed['k']) { $offered = [string]$parsed['k'] }
-      elseif ($parsed['acesso']) { $offered = [string]$parsed['acesso'] }
-    }
-  }
-  $ok = (Test-AccessSecret $offered) -or (Test-GateCookie $Req $key)
-  if (-not $ok) {
-    Send-GateForm $Res ([bool]$offered)
-    return
-  }
-  $admin = Join-Path $Root 'admin.html'
-  if (Test-AccessSecret $offered) {
-    $token = New-GateToken $key
-    $Res.Headers.Add('Set-Cookie', "pratique_gate=$([Uri]::EscapeDataString($token)); Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000")
-    if ($Req.HttpMethod -eq 'POST') {
-      $Res.StatusCode = 303
-      $Res.Headers.Add('Location', '/admin.html')
-      $Res.Headers.Add('Cache-Control', 'no-store')
-      return
-    }
-  }
-  $Res.Headers.Add('X-Robots-Tag', 'noindex, nofollow')
-  $Res.Headers.Add('Cache-Control', 'no-store')
-  Send-File $Res $admin
-}
-
 function Test-SecretEqual([string]$a, [string]$b) {
   if ([string]::IsNullOrEmpty($a) -or [string]::IsNullOrEmpty($b)) { return $false }
   $ba = [Text.Encoding]::UTF8.GetBytes($a)
@@ -289,34 +159,6 @@ function Test-SecretEqual([string]$a, [string]$b) {
   $diff = 0
   for ($i = 0; $i -lt $ba.Length; $i++) { $diff = $diff -bor ($ba[$i] -bxor $bb[$i]) }
   $diff -eq 0
-}
-
-function New-GateToken([string]$accessKey) {
-  $exp = (Get-UnixMs) + (30 * 24 * 60 * 60 * 1000)
-  $payloadJson = '{"g":1,"x":' + $exp + '}'
-  $payload = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($payloadJson)).TrimEnd('=').Replace('+','-').Replace('/','_')
-  $hmac = New-Object System.Security.Cryptography.HMACSHA256
-  $hmac.Key = [Text.Encoding]::UTF8.GetBytes((Get-Secret) + ':' + $accessKey)
-  $sig = -join ($hmac.ComputeHash([Text.Encoding]::UTF8.GetBytes($payload)) | ForEach-Object { $_.ToString('x2') })
-  "$payload.$sig"
-}
-
-function Test-GateCookie($Req, [string]$accessKey) {
-  $token = Get-CookieValue $Req 'pratique_gate'
-  if (-not $token -or -not $token.Contains('.')) { return $false }
-  $parts = $token.Split('.', 2)
-  $payload = $parts[0]
-  $sig = $parts[1]
-  $hmac = New-Object System.Security.Cryptography.HMACSHA256
-  $hmac.Key = [Text.Encoding]::UTF8.GetBytes((Get-Secret) + ':' + $accessKey)
-  $expected = -join ($hmac.ComputeHash([Text.Encoding]::UTF8.GetBytes($payload)) | ForEach-Object { $_.ToString('x2') })
-  if ($sig -ne $expected) { return $false }
-  $pad = 4 - ($payload.Length % 4)
-  if ($pad -ne 4) { $payload = $payload + ('=' * $pad) }
-  $json = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload.Replace('-','+').Replace('_','/')))
-  $obj = (Get-JsSer).DeserializeObject($json)
-  if (-not $obj.ContainsKey('g')) { return $false }
-  ([int]$obj['g'] -eq 1) -and ([int64]$obj['x'] -ge (Get-UnixMs))
 }
 
 function Send-NotFoundPage($Res) {
@@ -516,6 +358,10 @@ function Send-File($Res, $Path) {
   $bytes = [IO.File]::ReadAllBytes($Path)
   $Res.StatusCode = 200
   $Res.ContentType = $ctype
+  if ([IO.Path]::GetFileName($Path).ToLower() -eq 'admin.html') {
+    $Res.Headers.Add('X-Robots-Tag', 'noindex, nofollow')
+    $Res.Headers.Add('Cache-Control', 'no-store')
+  }
   $Res.ContentLength64 = $bytes.Length
   $Res.OutputStream.Write($bytes, 0, $bytes.Length)
 }
@@ -605,7 +451,7 @@ try {
   throw
 }
 Write-Host "Site: ${Prefix}"
-Write-Host ("Painel (guarde este link): {0}admin.html?k={1}" -f $Prefix, (Get-AccessKey))
+Write-Host "Painel: ${Prefix}admin.html"
 
 try {
   while ($listener.IsListening) {
@@ -615,8 +461,10 @@ try {
     try {
       $path = [Uri]::UnescapeDataString($req.Url.AbsolutePath)
       $pathNorm = $path.TrimEnd('/').ToLowerInvariant()
-      if ($pathNorm -eq '/admin.html' -or $pathNorm -eq '/painel') {
-        Handle-AdminPage $req $res
+      if ($pathNorm -eq '/painel') {
+        $res.StatusCode = 303
+        $res.Headers.Add('Location', '/admin.html')
+        $res.Headers.Add('Cache-Control', 'no-store')
       } elseif ($path.StartsWith('/api/')) {
         Handle-Api $req $res
       } else {
