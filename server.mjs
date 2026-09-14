@@ -1,3 +1,4 @@
+import "./lib/env.js";
 import { createServer } from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -58,5 +59,5 @@ const server = createServer(async (req, res) => {
 
 server.listen(port, "127.0.0.1", () => {
   console.log(`Site em http://127.0.0.1:${port}/`);
-  console.log(`Painel: http://127.0.0.1:${port}/admin.html?k=${process.env.ADMIN_ACCESS_KEY || "(veja data/access.key)"}`);
+  console.log(`Painel: http://127.0.0.1:${port}/admin.html`);
 });
