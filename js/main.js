@@ -27,7 +27,7 @@ if (toggle && nav) {
 }
 
 const revealTargets = document.querySelectorAll(
-  ".hero-copy, .hero-logo, .about-photo, .section-head, .card, .shot, .person, .map-shell, .local-aside, .contact-social, .strip p"
+  ".hero-copy, .hero-logo, .about-photo, .section-head, .card, .shot, .person, .map-shell, .local-experimental, .contact-social, .strip p"
 );
 revealTargets.forEach((el, i) => {
   el.classList.add("reveal");
