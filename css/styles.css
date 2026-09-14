@@ -424,6 +424,7 @@ a {
 
 .section {
   padding: 5.5rem 0;
+  scroll-margin-top: 5.75rem;
 }
 
 .section-head {
@@ -557,8 +558,8 @@ body:not(.admin-body) .person:hover {
 
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
 }
 
 .gallery-grid .shot {
@@ -567,6 +568,7 @@ body:not(.admin-body) .person:hover {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   min-width: 0;
+  aspect-ratio: 4 / 3;
 }
 
 .gallery-grid .shot img {
@@ -581,19 +583,8 @@ body:not(.admin-body) .person:hover {
   transform: scale(1.04);
 }
 
-.shot-cadillac {
-  grid-column: 1 / -1;
-  aspect-ratio: 16 / 7;
-}
-
 .shot-cadillac img {
-  object-position: 50% 42%;
-}
-
-.shot-estudio,
-.shot-recepcao,
-.shot-aluno {
-  aspect-ratio: 4 / 5;
+  object-position: 50% 46%;
 }
 
 .shot-estudio img {
@@ -601,11 +592,11 @@ body:not(.admin-body) .person:hover {
 }
 
 .shot-recepcao img {
-  object-position: 42% 30%;
+  object-position: 42% 28%;
 }
 
 .shot-aluno img {
-  object-position: 50% 18%;
+  object-position: 50% 22%;
 }
 
 .person img {
@@ -1106,7 +1097,6 @@ textarea {
   .shot-estudio,
   .shot-recepcao,
   .shot-aluno {
-    grid-column: auto;
     aspect-ratio: 4 / 5;
   }
 
@@ -1122,6 +1112,7 @@ textarea {
 
   .section {
     padding: 2.6rem 0;
+    scroll-margin-top: 4.6rem;
   }
 
   .section-head {
