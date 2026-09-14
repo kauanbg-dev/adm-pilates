@@ -527,8 +527,18 @@ body:not(.admin-body) .person:hover {
 }
 
 .team-grid-2 {
-  grid-template-columns: repeat(2, minmax(0, 320px));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 44rem;
   justify-content: start;
+  gap: 1.25rem;
+}
+
+.person {
+  overflow: hidden;
+}
+
+.person .eyebrow {
+  margin-bottom: 0.25rem;
 }
 
 .team-featured {
