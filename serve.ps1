@@ -45,19 +45,15 @@ function New-SeedStudio {
       @{ id = 'ins_bia'; name = 'Bia'; role = 'Dona e instrutora'; specialties = 'Clássico, reformer e solo' }
       @{ id = 'ins_alex'; name = 'Alex'; role = 'Instrutor'; specialties = 'Reformer, terapêutico e reabilitação' }
     )
-    plans = @(
-      @{ id = 'solo'; name = 'Solo mensal'; price = 280; modality = 'Solo'; weekly = 2; active = $true }
-      @{ id = 'reformer'; name = 'Reformer mensal'; price = 420; modality = 'Reformer'; weekly = 2; active = $true }
-      @{ id = 'terapeutico'; name = 'Terapêutico mensal'; price = 560; modality = 'Terapêutico'; weekly = 1; active = $true }
-      @{ id = 'prenatal'; name = 'Pré-natal mensal'; price = 360; modality = 'Pré-natal'; weekly = 2; active = $true }
-    )
+    plans = @()
+    classPrice = 80
     clients = @(
-      @{ id = 'cli_camila'; name = 'Camila Souza'; email = 'camila.souza@email.com'; phone = '(11) 98811-2200'; planId = 'reformer'; instructorId = 'ins_bia'; status = 'ativo'; notes = 'Lombar sensível.'; startedAt = '2026-03-10' }
-      @{ id = 'cli_pedro'; name = 'Pedro Lima'; email = 'pedro.lima@email.com'; phone = '(11) 97700-4411'; planId = 'reformer'; instructorId = 'ins_alex'; status = 'ativo'; notes = 'Corredor.'; startedAt = '2026-01-20' }
-      @{ id = 'cli_helena'; name = 'Helena Martins'; email = 'helena.martins@email.com'; phone = '(11) 99123-8877'; planId = 'prenatal'; instructorId = 'ins_bia'; status = 'ativo'; notes = 'Gestante.'; startedAt = '2026-05-04' }
-      @{ id = 'cli_joao'; name = 'João Ribeiro'; email = 'joao.ribeiro@email.com'; phone = '(11) 96544-1122'; planId = 'solo'; instructorId = 'ins_bia'; status = 'ativo'; notes = 'Iniciante.'; startedAt = '2026-07-01' }
-      @{ id = 'cli_ana'; name = 'Ana Beatriz Nunes'; email = 'ana.nunes@email.com'; phone = '(11) 98400-3399'; planId = 'terapeutico'; instructorId = 'ins_alex'; status = 'ativo'; notes = 'Pós-cirurgia de joelho.'; startedAt = '2026-04-15' }
-      @{ id = 'cli_lucia'; name = 'Lúcia Ferreira'; email = 'lucia.ferreira@email.com'; phone = '(11) 97211-5566'; planId = 'solo'; instructorId = 'ins_bia'; status = 'cancelado'; notes = 'Mudou de cidade.'; startedAt = '2025-11-02'; canceledAt = '2026-08-12'; cancelReason = 'Mudança para o interior' }
+      @{ id = 'cli_camila'; name = 'Camila Souza'; email = 'camila.souza@email.com'; phone = '(11) 98811-2200'; instructorId = 'ins_bia'; status = 'ativo'; notes = 'Lombar sensível.'; startedAt = '2026-03-10' }
+      @{ id = 'cli_pedro'; name = 'Pedro Lima'; email = 'pedro.lima@email.com'; phone = '(11) 97700-4411'; instructorId = 'ins_alex'; status = 'ativo'; notes = 'Corredor.'; startedAt = '2026-01-20' }
+      @{ id = 'cli_helena'; name = 'Helena Martins'; email = 'helena.martins@email.com'; phone = '(11) 99123-8877'; instructorId = 'ins_bia'; status = 'ativo'; notes = 'Gestante.'; startedAt = '2026-05-04' }
+      @{ id = 'cli_joao'; name = 'João Ribeiro'; email = 'joao.ribeiro@email.com'; phone = '(11) 96544-1122'; instructorId = 'ins_bia'; status = 'ativo'; notes = 'Iniciante.'; startedAt = '2026-07-01' }
+      @{ id = 'cli_ana'; name = 'Ana Beatriz Nunes'; email = 'ana.nunes@email.com'; phone = '(11) 98400-3399'; instructorId = 'ins_alex'; status = 'ativo'; notes = 'Pós-cirurgia de joelho.'; startedAt = '2026-04-15' }
+      @{ id = 'cli_lucia'; name = 'Lúcia Ferreira'; email = 'lucia.ferreira@email.com'; phone = '(11) 97211-5566'; instructorId = 'ins_bia'; status = 'cancelado'; notes = 'Mudou de cidade.'; startedAt = '2025-11-02'; canceledAt = '2026-08-12'; cancelReason = 'Mudança para o interior' }
     )
     appointments = @(
       @{ id = 'apt_1'; clientId = 'cli_camila'; instructorId = 'ins_bia'; date = (Get-IsoDay $weekStart); time = '07:00'; modality = 'Reformer'; status = 'agendado' }
@@ -70,11 +66,11 @@ function New-SeedStudio {
       @{ id = 'apt_8'; clientId = 'cli_joao'; instructorId = 'ins_bia'; date = (Get-IsoDay $weekStart.AddDays(4)); time = '18:00'; modality = 'Solo'; status = 'agendado' }
     )
     transactions = @(
-      @{ id = 'fin_1'; type = 'receita'; category = 'Mensalidade'; description = 'Reformer · Camila Souza'; amount = 420; date = $monthStart; status = 'pago'; clientId = 'cli_camila' }
-      @{ id = 'fin_2'; type = 'receita'; category = 'Mensalidade'; description = 'Reformer · Pedro Lima'; amount = 420; date = $monthStart; status = 'pago'; clientId = 'cli_pedro' }
-      @{ id = 'fin_3'; type = 'receita'; category = 'Mensalidade'; description = 'Pré-natal · Helena Martins'; amount = 360; date = $monthStart; status = 'pendente'; clientId = 'cli_helena' }
-      @{ id = 'fin_4'; type = 'receita'; category = 'Mensalidade'; description = 'Solo · João Ribeiro'; amount = 280; date = $monthStart; status = 'atrasado'; clientId = 'cli_joao' }
-      @{ id = 'fin_5'; type = 'receita'; category = 'Mensalidade'; description = 'Terapêutico · Ana Beatriz Nunes'; amount = 560; date = $monthStart; status = 'pago'; clientId = 'cli_ana' }
+      @{ id = 'fin_1'; type = 'receita'; category = 'Aula'; description = 'Aula · Camila Souza'; amount = 80; date = $monthStart; status = 'pago'; clientId = 'cli_camila' }
+      @{ id = 'fin_2'; type = 'receita'; category = 'Aula'; description = 'Aula · Pedro Lima'; amount = 80; date = $monthStart; status = 'pago'; clientId = 'cli_pedro' }
+      @{ id = 'fin_3'; type = 'receita'; category = 'Aula'; description = 'Aula · Helena Martins'; amount = 80; date = $monthStart; status = 'pendente'; clientId = 'cli_helena' }
+      @{ id = 'fin_4'; type = 'receita'; category = 'Aula'; description = 'Aula · João Ribeiro'; amount = 80; date = $monthStart; status = 'atrasado'; clientId = 'cli_joao' }
+      @{ id = 'fin_5'; type = 'receita'; category = 'Aula'; description = 'Aula · Ana Beatriz Nunes'; amount = 80; date = $monthStart; status = 'pago'; clientId = 'cli_ana' }
       @{ id = 'fin_6'; type = 'despesa'; category = 'Aluguel'; description = 'Aluguel'; amount = 7800; date = $monthStart; status = 'pago' }
       @{ id = 'fin_7'; type = 'despesa'; category = 'Folha'; description = 'Instrutores'; amount = 4200; date = $monthStart; status = 'pago' }
       @{ id = 'fin_8'; type = 'despesa'; category = 'Material'; description = 'Faixas e bolas'; amount = 340; date = $lastMonth; status = 'pago' }

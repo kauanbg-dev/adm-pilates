@@ -28,8 +28,19 @@ function ensureCatalog(db) {
     role: i.role || "Instrutor(a)",
     specialties: i.specialties || "",
   }));
-  db.plans = db.plans || [];
-  db.clients = db.clients || [];
+  db.plans = [];
+  const price = Number(db.classPrice);
+  if (!Number.isFinite(price) || price < 0) {
+    db.classPrice = 80;
+  } else {
+    db.classPrice = price;
+  }
+  db.clients = (db.clients || []).map((c) => {
+    if (!c || typeof c !== "object") return c;
+    const next = { ...c };
+    delete next.planId;
+    return next;
+  });
   db.appointments = db.appointments || [];
   db.transactions = db.transactions || [];
   return db;
@@ -106,8 +117,9 @@ const Studio = {
     await api("/api/studio", { method: "PUT", body: { studio: db } });
   },
 
-  plan(db, id) {
-    return db.plans.find((p) => p.id === id);
+  classPrice(db) {
+    const n = Number(db?.classPrice);
+    return Number.isFinite(n) && n >= 0 ? n : 80;
   },
 
   client(db, id) {
