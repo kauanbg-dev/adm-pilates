@@ -137,6 +137,13 @@ function weekRangeLabel(days) {
   return `${start.getDate()} de ${startMonth} de ${start.getFullYear()} a ${end.getDate()} de ${endMonth} de ${end.getFullYear()}`;
 }
 
+function firstMondayInMonth(year, monthIndex) {
+  const first = new Date(year, monthIndex, 1);
+  first.setHours(0, 0, 0, 0);
+  const weekday = (first.getDay() + 6) % 7;
+  return weekday === 0 ? first : addDays(first, 7 - weekday);
+}
+
 function goToMonth(year, monthIndex) {
   const now = new Date();
   if (year === now.getFullYear() && monthIndex === now.getMonth()) {
@@ -144,17 +151,8 @@ function goToMonth(year, monthIndex) {
     agendaDayIndex = Math.min(5, (now.getDay() + 6) % 7);
     return;
   }
-  const first = new Date(year, monthIndex, 1);
-  first.setHours(0, 0, 0, 0);
-  const weekday = (first.getDay() + 6) % 7;
-  const start = weekday === 6 ? addDays(first, 1) : first;
-  weekOffset = weekOffsetForDate(start);
-  const days = weekDays();
-  const idx = days.findIndex((d) => {
-    const dt = parseAgendaDate(d.date);
-    return dt.getFullYear() === year && dt.getMonth() === monthIndex;
-  });
-  agendaDayIndex = idx >= 0 ? idx : 0;
+  weekOffset = weekOffsetForDate(firstMondayInMonth(year, monthIndex));
+  agendaDayIndex = 0;
 }
 
 function shiftAgendaMonth(delta) {
