@@ -557,9 +557,8 @@ body:not(.admin-body) .person:hover {
 
 .gallery-grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr 1fr;
-  grid-auto-rows: minmax(180px, auto);
-  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
 }
 
 .gallery-grid .shot {
@@ -567,6 +566,7 @@ body:not(.admin-body) .person:hover {
   overflow: hidden;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  min-width: 0;
 }
 
 .gallery-grid .shot img {
@@ -581,54 +581,31 @@ body:not(.admin-body) .person:hover {
   transform: scale(1.04);
 }
 
-.shot-estudio {
-  grid-column: 1 / 3;
-  aspect-ratio: 16 / 9;
-}
-
-.shot-estudio img {
-  object-position: 50% 40%;
-}
-
-.shot-recepcao {
-  aspect-ratio: 3 / 4;
-}
-
-.shot-recepcao img {
-  object-position: 40% 28%;
-}
-
 .shot-cadillac {
-  aspect-ratio: 4 / 3;
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 7;
 }
 
 .shot-cadillac img {
-  object-position: 50% 36%;
+  object-position: 50% 42%;
 }
 
+.shot-estudio,
+.shot-recepcao,
 .shot-aluno {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 5;
+}
+
+.shot-estudio img {
+  object-position: 50% 42%;
+}
+
+.shot-recepcao img {
+  object-position: 42% 30%;
 }
 
 .shot-aluno img {
-  object-position: 50% 22%;
-}
-
-.shot-alunas {
-  aspect-ratio: 3 / 4;
-}
-
-.shot-alunas img {
-  object-position: 50% 16%;
-}
-
-.shot-turma {
-  grid-column: 2 / 4;
-  aspect-ratio: 16 / 10;
-}
-
-.shot-turma img {
-  object-position: 50% 48%;
+  object-position: 50% 18%;
 }
 
 .person img {
@@ -1125,17 +1102,12 @@ textarea {
     gap: 0.65rem;
   }
 
-  .shot-estudio,
-  .shot-turma {
-    grid-column: 1 / -1;
-    aspect-ratio: 16 / 10;
-  }
-
-  .shot-recepcao,
   .shot-cadillac,
-  .shot-aluno,
-  .shot-alunas {
-    aspect-ratio: 1 / 1;
+  .shot-estudio,
+  .shot-recepcao,
+  .shot-aluno {
+    grid-column: auto;
+    aspect-ratio: 4 / 5;
   }
 
   .local-layout {
