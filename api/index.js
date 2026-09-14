@@ -1,6 +1,28 @@
+import "../lib/env.js";
 import { cookieHeader, parseCookie, readSession, signSession, verifyPassword } from "../lib/auth.js";
 import { mergeStudioWrite, studioForClient } from "../lib/permissions.js";
 import { findUser, initStore, loadStudio, saveStudio, sessionSecret } from "../lib/store.js";
+
+const loginHits = new Map();
+
+function clientIp(req) {
+  const fwd = String(req.headers["x-forwarded-for"] || "")
+    .split(",")[0]
+    .trim();
+  return fwd || req.socket?.remoteAddress || "unknown";
+}
+
+function loginLimited(ip) {
+  const now = Date.now();
+  const rec = loginHits.get(ip) || { n: 0, start: now };
+  if (now - rec.start > 15 * 60 * 1000) {
+    rec.n = 0;
+    rec.start = now;
+  }
+  rec.n += 1;
+  loginHits.set(ip, rec);
+  return rec.n > 20;
+}
 
 async function readJson(req) {
   if (req.body) {
@@ -39,6 +61,10 @@ export default async function handler(req, res) {
 
   try {
     if (path === "/api/login" && req.method === "POST") {
+      if (loginLimited(clientIp(req))) {
+        send(res, 429, { error: "Muitas tentativas. Espere alguns minutos." });
+        return;
+      }
       await initStore();
       const body = await readJson(req);
       const user = await findUser(String(body.email || ""));
@@ -95,6 +121,7 @@ export default async function handler(req, res) {
 
     send(res, 404, { error: "Não encontrado." });
   } catch (err) {
-    send(res, 500, { error: err.message || "Erro interno." });
+    console.error(err);
+    send(res, 500, { error: "Erro interno." });
   }
 }

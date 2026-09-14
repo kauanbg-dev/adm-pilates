@@ -180,7 +180,7 @@ function isOwnerInstructor(instructor) {
 function canEditInstructor(instructor) {
   if (!isStaff()) return true;
   if (isOwnerInstructor(instructor)) return false;
-  return String(instructor?.id || "") === "ins_alex" || String(instructor?.name || "").trim().toLowerCase() === String(currentUser?.name || "").trim().toLowerCase();
+  return String(instructor?.name || "").trim().toLowerCase() === String(currentUser?.name || "").trim().toLowerCase();
 }
 
 function applyRoleUi() {
@@ -263,7 +263,7 @@ function statusChip(status) {
     atrasado: "Em atraso",
     experimental: "Experimental",
   };
-  return `<span class="chip ${map[status] || ""}">${labels[status] || status}</span>`;
+  return `<span class="chip ${map[status] || ""}">${escapeHtml(labels[status] || "—")}</span>`;
 }
 
 function monthKey(iso) {
@@ -404,7 +404,7 @@ function renderHome() {
             ? `<ul class="plain-list">${aulasHoje
                 .sort((a, b) => a.time.localeCompare(b.time))
                 .map(
-                  (a) => `<li><strong>${a.time}</strong> · ${escapeHtml(a.modality)}${a.kind === "experimental" ? " · experimental" : ""}<br /><span class="muted">${escapeHtml(personLabel(a))} · ${escapeHtml(instructorName(a.instructorId))}</span> ${statusChip(a.status)}</li>`
+                  (a) => `<li><strong>${escapeHtml(a.time)}</strong> · ${escapeHtml(a.modality)}${a.kind === "experimental" ? " · experimental" : ""}<br /><span class="muted">${escapeHtml(personLabel(a))} · ${escapeHtml(instructorName(a.instructorId))}</span> ${statusChip(a.status)}</li>`
                 )
                 .join("")}</ul>`
             : `<p class="muted">Nenhuma aula marcada para hoje. Abra a agenda para agendar.</p>`
@@ -463,13 +463,13 @@ function renderClients() {
               <td data-label="Status">${statusChip(c.status)}</td>
               <td data-label="Início">${formatDate(c.startedAt)}</td>
               <td class="td-actions">
-                <button class="linkish" type="button" data-action="editar-cliente" data-id="${c.id}">Editar</button>
+                <button class="linkish" type="button" data-action="editar-cliente" data-id="${escapeAttr(c.id)}">Editar</button>
                 ${
                   c.status === "ativo"
-                    ? `<button class="linkish danger" type="button" data-action="cancelar-cliente" data-id="${c.id}">Cancelar</button>`
-                    : `<button class="linkish" type="button" data-action="reativar-cliente" data-id="${c.id}">Reativar</button>`
+                    ? `<button class="linkish danger" type="button" data-action="cancelar-cliente" data-id="${escapeAttr(c.id)}">Cancelar</button>`
+                    : `<button class="linkish" type="button" data-action="reativar-cliente" data-id="${escapeAttr(c.id)}">Reativar</button>`
                 }
-                <button class="linkish danger" type="button" data-action="excluir-cliente" data-id="${c.id}">Excluir</button>
+                <button class="linkish danger" type="button" data-action="excluir-cliente" data-id="${escapeAttr(c.id)}">Excluir</button>
               </td>
             </tr>`
                   )
@@ -500,7 +500,7 @@ function clientForm(c) {
       </label>
       <label>Profissional
         <select name="instructorId" required>${db.instructors
-          .map((i) => `<option value="${i.id}" ${i.id === value.instructorId ? "selected" : ""}>${escapeHtml(i.name)}</option>`)
+          .map((i) => `<option value="${escapeAttr(i.id)}" ${i.id === value.instructorId ? "selected" : ""}>${escapeHtml(i.name)}</option>`)
           .join("")}</select>
       </label>
       <p class="muted">E-mail e WhatsApp são opcionais.</p>
@@ -660,7 +660,7 @@ function renderAgenda() {
           <tbody>
             ${times.map((time) => {
               return `<tr>
-                <th>${time}</th>
+                <th>${escapeHtml(time)}</th>
                 ${days
                   .map((d) => {
                     const items = db.appointments.filter((a) => a.date === d.date && a.time === time && a.status !== "cancelado");
@@ -672,7 +672,7 @@ function renderAgenda() {
                       .map(([mod, n]) => `${mod} ${n}/${Studio.maxFor(db, mod)}`)
                       .join(" · ");
                     return `<td>
-                      <button class="slot" type="button" data-action="slot" data-date="${d.date}" data-time="${time}">
+                      <button class="slot" type="button" data-action="slot" data-date="${escapeAttr(d.date)}" data-time="${escapeAttr(time)}">
                         ${
                           items.length
                             ? items
@@ -710,8 +710,8 @@ function renderAgenda() {
             const label = items.length
               ? items.map((a) => `${personLabel(a).split(" ")[0]} · ${a.modality}`).join(" · ")
               : "Livre";
-            return `<button class="agenda-row" type="button" data-action="slot" data-date="${day.date}" data-time="${time}">
-              <strong>${time}</strong>
+            return `<button class="agenda-row" type="button" data-action="slot" data-date="${escapeAttr(day.date)}" data-time="${escapeAttr(time)}">
+              <strong>${escapeHtml(time)}</strong>
               <span>${escapeHtml(label)}${items.some((a) => a.kind === "experimental") ? " · exp." : ""}</span>
             </button>`;
           })
@@ -738,7 +738,7 @@ function appointmentForm(preset = {}) {
         <select name="clientId">
           <option value="">${experimental ? "Visitante (não cadastrado)" : "Selecione o aluno"}</option>
           ${list
-            .map((c) => `<option value="${c.id}" ${c.id === preset.clientId ? "selected" : ""}>${escapeHtml(c.name)}${c.status !== "ativo" ? " (inativo)" : ""}</option>`)
+            .map((c) => `<option value="${escapeAttr(c.id)}" ${c.id === preset.clientId ? "selected" : ""}>${escapeHtml(c.name)}${c.status !== "ativo" ? " (inativo)" : ""}</option>`)
             .join("")}
         </select>
       </label>
@@ -748,18 +748,18 @@ function appointmentForm(preset = {}) {
         <label>WhatsApp <input name="guestPhone" value="${escapeAttr(preset.guestPhone || "")}" placeholder="(21) 9...." /></label>
       </div>
       <div class="row-2">
-        <label>Data <input type="date" name="date" required value="${preset.date || todayIso()}" /></label>
+        <label>Data <input type="date" name="date" required value="${escapeAttr(preset.date || todayIso())}" /></label>
         <label>Horário
-          <select name="time">${classTimes().map((t) => `<option ${t === (preset.time || classTimes()[0] || "08:00") ? "selected" : ""}>${t}</option>`).join("")}</select>
+          <select name="time">${classTimes().map((t) => `<option ${t === (preset.time || classTimes()[0] || "08:00") ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select>
         </label>
       </div>
       <div class="row-2">
         <label>Modalidade
-          <select name="modality">${formatNames(false, preset.modality).map((m) => `<option ${m === (preset.modality || formatNames(false)[0]) ? "selected" : ""}>${m}</option>`).join("")}</select>
+          <select name="modality">${formatNames(false, preset.modality).map((m) => `<option ${m === (preset.modality || formatNames(false)[0]) ? "selected" : ""}>${escapeHtml(m)}</option>`).join("")}</select>
         </label>
         <label>Instrutor
           <select name="instructorId">${db.instructors
-            .map((i) => `<option value="${i.id}" ${i.id === (preset.instructorId || db.instructors[0]?.id) ? "selected" : ""}>${escapeHtml(i.name)}</option>`)
+            .map((i) => `<option value="${escapeAttr(i.id)}" ${i.id === (preset.instructorId || db.instructors[0]?.id) ? "selected" : ""}>${escapeHtml(i.name)}</option>`)
             .join("")}</select>
         </label>
       </div>
@@ -882,7 +882,7 @@ function openNewAppointment(preset) {
 function openSlot(date, time) {
   const items = db.appointments.filter((a) => a.date === date && a.time === time && a.status !== "cancelado");
   openModal(
-    `${time} · ${formatDate(date)}`,
+    `${escapeHtml(time)} · ${formatDate(date)}`,
     `
     ${
       items.length
@@ -894,10 +894,10 @@ function openSlot(date, time) {
                 <span class="muted">${escapeHtml(instructorName(a.instructorId))}${a.guestPhone ? ` · ${escapeHtml(a.guestPhone)}` : ""}</span>
                 ${statusChip(a.status)}
                 <div class="inline-actions">
-                  <button class="btn btn-ghost-dark" type="button" data-action="editar-aula" data-id="${a.id}">Editar</button>
-                  <button class="btn btn-ghost-dark" type="button" data-action="presenca" data-id="${a.id}">Compareceu</button>
-                  <button class="btn btn-ghost-dark" type="button" data-action="falta" data-id="${a.id}">Faltou</button>
-                  <button class="btn btn-danger" type="button" data-action="remover-aula" data-id="${a.id}">Remover da agenda</button>
+                  <button class="btn btn-ghost-dark" type="button" data-action="editar-aula" data-id="${escapeAttr(a.id)}">Editar</button>
+                  <button class="btn btn-ghost-dark" type="button" data-action="presenca" data-id="${escapeAttr(a.id)}">Compareceu</button>
+                  <button class="btn btn-ghost-dark" type="button" data-action="falta" data-id="${escapeAttr(a.id)}">Faltou</button>
+                  <button class="btn btn-danger" type="button" data-action="remover-aula" data-id="${escapeAttr(a.id)}">Remover da agenda</button>
                 </div>
               </li>`
             )
@@ -905,8 +905,8 @@ function openSlot(date, time) {
         : `<p class="muted">Horário livre. Agende um aluno ou uma aula experimental.</p>`
     }
     <div class="inline-actions">
-      <button class="btn btn-primary" type="button" data-action="agendar-neste" data-date="${date}" data-time="${time}">Agendar aluno</button>
-      <button class="btn btn-ghost-dark" type="button" data-action="experimental-neste" data-date="${date}" data-time="${time}">Aula experimental</button>
+      <button class="btn btn-primary" type="button" data-action="agendar-neste" data-date="${escapeAttr(date)}" data-time="${escapeAttr(time)}">Agendar aluno</button>
+      <button class="btn btn-ghost-dark" type="button" data-action="experimental-neste" data-date="${escapeAttr(date)}" data-time="${escapeAttr(time)}">Aula experimental</button>
     </div>
   `
   );
@@ -959,16 +959,16 @@ function renderFinance() {
               <td data-label="Valor">${money(t.amount)}</td>
               <td data-label="Status">${statusChip(t.status)}</td>
               <td class="td-actions">
-                <button class="linkish" type="button" data-action="editar-lancamento" data-id="${t.id}">Editar</button>
-                <button class="linkish danger" type="button" data-action="excluir-lancamento" data-id="${t.id}">Excluir</button>
+                <button class="linkish" type="button" data-action="editar-lancamento" data-id="${escapeAttr(t.id)}">Editar</button>
+                <button class="linkish danger" type="button" data-action="excluir-lancamento" data-id="${escapeAttr(t.id)}">Excluir</button>
                 ${
                   t.status !== "pago"
-                    ? `<button class="linkish" type="button" data-action="baixar" data-id="${t.id}">Marcar pago</button>`
+                    ? `<button class="linkish" type="button" data-action="baixar" data-id="${escapeAttr(t.id)}">Marcar pago</button>`
                     : ""
                 }
                 ${
                   t.type === "receita" && t.status === "pendente"
-                    ? `<button class="linkish danger" type="button" data-action="atrasar" data-id="${t.id}">Em atraso</button>`
+                    ? `<button class="linkish danger" type="button" data-action="atrasar" data-id="${escapeAttr(t.id)}">Em atraso</button>`
                     : ""
                 }
               </td>
@@ -1053,7 +1053,7 @@ function openDeleteLancamento(id) {
     "Excluir lançamento",
     `
     <p>Apagar <strong>${escapeHtml(t.description)}</strong> (${money(t.amount)} · ${formatDate(t.date)})? Essa ação não pode ser desfeita.</p>
-    <button class="btn btn-danger" type="button" data-action="confirmar-excluir-lancamento" data-id="${t.id}">Excluir lançamento</button>
+    <button class="btn btn-danger" type="button" data-action="confirmar-excluir-lancamento" data-id="${escapeAttr(t.id)}">Excluir lançamento</button>
   `
   );
 }
@@ -1153,10 +1153,10 @@ function renderTeam() {
                       <td class="td-actions">
                         ${
                           canEditInstructor(i)
-                            ? `<button class="btn btn-ghost-dark" type="button" data-action="editar-instrutor" data-id="${i.id}">Editar</button>`
+                            ? `<button class="btn btn-ghost-dark" type="button" data-action="editar-instrutor" data-id="${escapeAttr(i.id)}">Editar</button>`
                             : `<span class="muted">Somente a dona edita</span>`
                         }
-                        ${isStaff() || isOwnerInstructor(i) ? "" : `<button class="btn btn-danger" type="button" data-action="excluir-instrutor" data-id="${i.id}">Excluir</button>`}
+                        ${isStaff() || isOwnerInstructor(i) ? "" : `<button class="btn btn-danger" type="button" data-action="excluir-instrutor" data-id="${escapeAttr(i.id)}">Excluir</button>`}
                       </td>
                     </tr>`;
                   })
@@ -1239,7 +1239,7 @@ function openDeleteInstructor(id) {
              </label>
              <button class="btn btn-danger" type="submit">Mover e excluir</button>
            </form>`
-        : `<button class="btn btn-danger" type="button" data-action="confirmar-excluir-instrutor" data-id="${i.id}">Excluir</button>`
+        : `<button class="btn btn-danger" type="button" data-action="confirmar-excluir-instrutor" data-id="${escapeAttr(i.id)}">Excluir</button>`
     }
   `
   );
@@ -1271,9 +1271,9 @@ function renderAulas() {
               <p>${m.capacity} vagas · ${m.duration} min</p>
               <p>${m.active ? statusChip("ativo") : statusChip("inativo")}</p>
               <div class="inline-actions">
-                <button class="linkish" type="button" data-action="editar-modalidade" data-id="${m.id}">Editar</button>
-                <button class="linkish" type="button" data-action="toggle-modalidade" data-id="${m.id}">${m.active ? "Desativar" : "Reativar"}</button>
-                <button class="linkish danger" type="button" data-action="excluir-modalidade" data-id="${m.id}">Excluir</button>
+                <button class="linkish" type="button" data-action="editar-modalidade" data-id="${escapeAttr(m.id)}">Editar</button>
+                <button class="linkish" type="button" data-action="toggle-modalidade" data-id="${escapeAttr(m.id)}">${m.active ? "Desativar" : "Reativar"}</button>
+                <button class="linkish danger" type="button" data-action="excluir-modalidade" data-id="${escapeAttr(m.id)}">Excluir</button>
               </div>
             </article>`
           )
@@ -1290,10 +1290,10 @@ function renderAulas() {
             ${(db.times || [])
               .map(
                 (t) => `<tr>
-                  <td data-label="Horário">${t}</td>
+                  <td data-label="Horário">${escapeHtml(t)}</td>
                   <td class="td-actions">
-                    <button class="linkish" type="button" data-action="editar-horario" data-time="${t}">Editar</button>
-                    <button class="linkish danger" type="button" data-action="excluir-horario" data-time="${t}">Excluir</button>
+                    <button class="linkish" type="button" data-action="editar-horario" data-time="${escapeAttr(t)}">Editar</button>
+                    <button class="linkish danger" type="button" data-action="excluir-horario" data-time="${escapeAttr(t)}">Excluir</button>
                   </td>
                 </tr>`
               )
@@ -1383,7 +1383,7 @@ function openDeleteModality(id) {
              </label>
              <button class="btn btn-danger" type="submit">Mover e excluir</button>
            </form>`
-        : `<button class="btn btn-danger" type="button" data-action="confirmar-excluir-modalidade" data-id="${m.id}">Excluir</button>`
+        : `<button class="btn btn-danger" type="button" data-action="confirmar-excluir-modalidade" data-id="${escapeAttr(m.id)}">Excluir</button>`
     }
   `
   );
@@ -1439,7 +1439,7 @@ function openDeleteClient(id) {
     "Excluir aluno",
     `
     <p>Apagar o cadastro de <strong>${escapeHtml(c.name)}</strong>? Aulas e lançamentos ligados a essa pessoa também saem.</p>
-    <button class="btn btn-danger" type="button" data-action="confirmar-excluir-cliente" data-id="${c.id}">Excluir cadastro</button>
+    <button class="btn btn-danger" type="button" data-action="confirmar-excluir-cliente" data-id="${escapeAttr(c.id)}">Excluir cadastro</button>
   `
   );
 }
@@ -1609,8 +1609,8 @@ root.addEventListener("click", (e) => {
     const time = btn.dataset.time;
     openModal(
       "Excluir horário",
-      `<p>Tirar <strong>${time}</strong> da grade? Aulas nesse horário continuam no histórico, mas o slot some da agenda se não houver ninguém marcado.</p>
-       <button class="btn btn-danger" type="button" data-action="confirmar-excluir-horario" data-time="${time}">Excluir horário</button>`
+      `<p>Tirar <strong>${escapeHtml(time)}</strong> da grade? Aulas nesse horário continuam no histórico, mas o slot some da agenda se não houver ninguém marcado.</p>
+       <button class="btn btn-danger" type="button" data-action="confirmar-excluir-horario" data-time="${escapeAttr(time)}">Excluir horário</button>`
     );
   }
 });
@@ -1678,8 +1678,8 @@ modalBody.addEventListener("click", (e) => {
     if (!apt) return;
     openModal(
       "Remover da agenda",
-      `<p>Tirar <strong>${escapeHtml(personLabel(apt))}</strong> de ${apt.time} · ${formatDate(apt.date)}?</p>
-       <button class="btn btn-danger" type="button" data-action="confirmar-remover-aula" data-id="${apt.id}">Remover</button>`
+      `<p>Tirar <strong>${escapeHtml(personLabel(apt))}</strong> de ${escapeHtml(apt.time)} · ${formatDate(apt.date)}?</p>
+       <button class="btn btn-danger" type="button" data-action="confirmar-remover-aula" data-id="${escapeAttr(apt.id)}">Remover</button>`
     );
   }
   if (a === "confirmar-remover-aula") {
