@@ -213,20 +213,32 @@ function Initialize-Store {
   $email = 'bia@pratiquepilates.com'
   if ($env:ADMIN_EMAIL) { $email = $env:ADMIN_EMAIL.ToLower() }
   $password = $env:ADMIN_PASSWORD
-  if (-not (Test-Path $UsersFile)) {
-    if (-not $password) {
-      throw 'Defina ADMIN_PASSWORD no arquivo .env (não use senha de teste no código).'
-    }
-    $salt = New-SaltBytes
-    $hash = Get-PasswordHash $password $salt
-    $saltB64 = [Convert]::ToBase64String($salt)
-    $users = @(
-      @{ email = $email; name = 'Bia'; role = 'admin'; passwordHash = $hash; salt = $saltB64 }
-      @{ email = 'admin@pratiquepilates.com'; name = 'Bia'; role = 'admin'; passwordHash = $hash; salt = $saltB64 }
-    )
-    [IO.File]::WriteAllText($UsersFile, ($users | ConvertTo-Json -Depth 6), (New-Object Text.UTF8Encoding $false))
+  if (-not $password) {
+    throw 'Defina ADMIN_PASSWORD no arquivo .env (não use senha de exemplo).'
   }
-  Ensure-AlexUser
+  $salt = New-SaltBytes
+  $hash = Get-PasswordHash $password $salt
+  $saltB64 = [Convert]::ToBase64String($salt)
+  $users = @(
+    @{ email = $email; name = 'Bia'; role = 'admin'; passwordHash = $hash; salt = $saltB64 }
+  )
+  if ($email -ne 'admin@pratiquepilates.com') {
+    $users += @{ email = 'admin@pratiquepilates.com'; name = 'Bia'; role = 'admin'; passwordHash = $hash; salt = $saltB64 }
+  }
+  $alexEmail = 'alex@pratiquepilates.com'
+  if ($env:ALEX_EMAIL) { $alexEmail = $env:ALEX_EMAIL.ToLower() }
+  if ($env:ALEX_PASSWORD) {
+    $alexSalt = New-SaltBytes
+    $alexHash = Get-PasswordHash $env:ALEX_PASSWORD $alexSalt
+    $users += @{
+      email = $alexEmail
+      name = 'Alex'
+      role = 'staff'
+      passwordHash = $alexHash
+      salt = [Convert]::ToBase64String($alexSalt)
+    }
+  }
+  [IO.File]::WriteAllText($UsersFile, ($users | ConvertTo-Json -Depth 6), (New-Object Text.UTF8Encoding $false))
   if (-not (Test-Path $StudioFile)) {
     [IO.File]::WriteAllText($StudioFile, (New-SeedStudio), (New-Object Text.UTF8Encoding $false))
   }
@@ -308,30 +320,6 @@ function Test-IsOwnInstructor($i, $auth) {
   $id = [string]$i['id']
   $name = [string]$i['name']
   return ($id -eq 'ins_alex') -or ($name -eq [string]$auth['name'])
-}
-
-function Ensure-AlexUser {
-  if (-not (Test-Path $UsersFile)) { return }
-  $email = 'alex@pratiquepilates.com'
-  if ($env:ALEX_EMAIL) { $email = $env:ALEX_EMAIL.ToLower() }
-  $password = $env:ALEX_PASSWORD
-  $users = (Get-JsSer).DeserializeObject([IO.File]::ReadAllText($UsersFile))
-  foreach ($u in $users) {
-    if ([string]$u['email'] -eq $email) { return }
-  }
-  if (-not $password) { return }
-  $salt = New-SaltBytes
-  $hash = Get-PasswordHash $password $salt
-  $list = New-Object System.Collections.ArrayList
-  foreach ($u in $users) { [void]$list.Add($u) }
-  [void]$list.Add(@{
-    email = $email
-    name = 'Alex'
-    role = 'staff'
-    passwordHash = $hash
-    salt = [Convert]::ToBase64String($salt)
-  })
-  [IO.File]::WriteAllText($UsersFile, ($list | ConvertTo-Json -Depth 6), (New-Object Text.UTF8Encoding $false))
 }
 
 function Studio-ForClient($auth, [string]$raw) {
