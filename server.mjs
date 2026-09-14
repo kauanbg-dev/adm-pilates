@@ -4,7 +4,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import handler from "./api/index.js";
-import painel from "./api/painel.js";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 8780);
@@ -23,8 +22,9 @@ const types = {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${port}`);
-  if (url.pathname === "/admin.html" || url.pathname === "/painel") {
-    await painel(req, res);
+  if (url.pathname === "/painel") {
+    res.writeHead(303, { Location: "/admin.html", "Cache-Control": "no-store" });
+    res.end();
     return;
   }
   if (url.pathname.startsWith("/api/")) {
@@ -53,7 +53,12 @@ const server = createServer(async (req, res) => {
     return;
   }
   const ext = path.extname(full).toLowerCase();
-  res.writeHead(200, { "Content-Type": types[ext] || "application/octet-stream" });
+  const headers = { "Content-Type": types[ext] || "application/octet-stream" };
+  if (n === "admin.html") {
+    headers["X-Robots-Tag"] = "noindex, nofollow";
+    headers["Cache-Control"] = "no-store";
+  }
+  res.writeHead(200, headers);
   fs.createReadStream(full).pipe(res);
 });
 
