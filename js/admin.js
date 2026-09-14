@@ -321,7 +321,7 @@ function filteredClients() {
     const hit =
       !q ||
       c.name.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q) ||
+      (c.email || "").toLowerCase().includes(q) ||
       (c.phone || "").includes(q);
     const st = clientFilter === "todos" || c.status === clientFilter;
     return hit && st;
@@ -332,7 +332,7 @@ function renderClients() {
   const rows = filteredClients();
   root.innerHTML = `
     <div class="toolbar">
-      <input type="search" id="busca-cliente" placeholder="Buscar por nome, e-mail ou telefone" value="${escapeAttr(clientQuery)}" />
+      <input type="search" id="busca-cliente" placeholder="Buscar por nome ou contato" value="${escapeAttr(clientQuery)}" />
       <select id="filtro-cliente">
         <option value="todos" ${clientFilter === "todos" ? "selected" : ""}>Todos</option>
         <option value="ativo" ${clientFilter === "ativo" ? "selected" : ""}>Ativos</option>
@@ -358,7 +358,7 @@ function renderClients() {
                   .map(
                     (c) => `
             <tr>
-              <td data-label="Aluno">${escapeHtml(c.name)}<br /><span class="muted">${escapeHtml(c.email)} · ${escapeHtml(c.phone || "—")}</span></td>
+              <td data-label="Aluno">${escapeHtml(c.name)}<br /><span class="muted">${escapeHtml([c.email, c.phone].filter(Boolean).join(" · ") || "Sem e-mail ou WhatsApp")}</span></td>
               <td data-label="Instrutor">${escapeHtml(instructorName(c.instructorId))}</td>
               <td data-label="Status">${statusChip(c.status)}</td>
               <td data-label="Início">${formatDate(c.startedAt)}</td>
@@ -394,17 +394,24 @@ function clientForm(c) {
     startedAt: todayIso(),
   };
   return `
-    <form id="form-cliente" class="contact-form nested">
-      <label>Nome <input name="name" required value="${escapeAttr(value.name)}" /></label>
-      <div class="row-2">
-        <label>E-mail <input type="email" name="email" required value="${escapeAttr(value.email)}" /></label>
-        <label>WhatsApp <input name="phone" required value="${escapeAttr(value.phone)}" /></label>
-      </div>
-      <label>Instrutor de referência
-        <select name="instructorId">${db.instructors
+    <form id="form-cliente" class="contact-form nested" novalidate>
+      <label>Nome
+        <input name="name" required autocomplete="name" value="${escapeAttr(value.name)}" />
+      </label>
+      <label>Profissional
+        <select name="instructorId" required>${db.instructors
           .map((i) => `<option value="${i.id}" ${i.id === value.instructorId ? "selected" : ""}>${escapeHtml(i.name)}</option>`)
           .join("")}</select>
       </label>
+      <p class="muted">E-mail e WhatsApp são opcionais.</p>
+      <div class="row-2">
+        <label>E-mail
+          <input type="email" name="email" autocomplete="email" inputmode="email" placeholder="Opcional" value="${escapeAttr(value.email)}" />
+        </label>
+        <label>WhatsApp
+          <input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="Opcional" value="${escapeAttr(value.phone)}" />
+        </label>
+      </div>
       <label>Observações clínicas / objetivas
         <textarea name="notes" rows="3">${escapeHtml(value.notes || "")}</textarea>
       </label>
@@ -419,14 +426,22 @@ function openNewClient() {
     const client = {
       id: uid("cli"),
       name: String(fd.get("name")).trim(),
-      email: String(fd.get("email")).trim().toLowerCase(),
-      phone: String(fd.get("phone")).trim(),
-      instructorId: String(fd.get("instructorId")),
+      email: String(fd.get("email") || "").trim().toLowerCase(),
+      phone: String(fd.get("phone") || "").trim(),
+      instructorId: String(fd.get("instructorId") || ""),
       notes: String(fd.get("notes") || "").trim(),
       status: "ativo",
       startedAt: todayIso(),
     };
-    if (db.clients.some((c) => c.email === client.email && c.status !== "cancelado")) {
+    if (!client.name) {
+      alert("Informe o nome da pessoa.");
+      return;
+    }
+    if (!client.instructorId) {
+      alert("Escolha o profissional.");
+      return;
+    }
+    if (client.email && db.clients.some((c) => c.email && c.email === client.email && c.status !== "cancelado")) {
       alert("Já existe um aluno ativo com este e-mail.");
       return;
     }
@@ -443,10 +458,25 @@ function openEditClient(id) {
   if (!c) return;
   openModal("Editar aluno", clientForm(c));
   bindForm("#form-cliente", (fd) => {
-    c.name = String(fd.get("name")).trim();
-    c.email = String(fd.get("email")).trim().toLowerCase();
-    c.phone = String(fd.get("phone")).trim();
-    c.instructorId = String(fd.get("instructorId"));
+    const name = String(fd.get("name")).trim();
+    const instructorId = String(fd.get("instructorId") || "");
+    if (!name) {
+      alert("Informe o nome da pessoa.");
+      return;
+    }
+    if (!instructorId) {
+      alert("Escolha o profissional.");
+      return;
+    }
+    const email = String(fd.get("email") || "").trim().toLowerCase();
+    if (email && db.clients.some((other) => other.id !== c.id && other.email && other.email === email && other.status !== "cancelado")) {
+      alert("Já existe um aluno ativo com este e-mail.");
+      return;
+    }
+    c.name = name;
+    c.email = email;
+    c.phone = String(fd.get("phone") || "").trim();
+    c.instructorId = instructorId;
     c.notes = String(fd.get("notes") || "").trim();
     persist();
     closeModal();

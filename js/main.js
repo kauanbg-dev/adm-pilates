@@ -1,19 +1,30 @@
 const toggle = document.querySelector(".nav-toggle");
 const nav = document.querySelector(".site-nav");
+const scrim = document.querySelector("#nav-scrim");
 const form = document.querySelector("#form-aula");
 const statusEl = document.querySelector(".form-status");
 
+function setMenu(open) {
+  if (!toggle || !nav) return;
+  nav.classList.toggle("open", open);
+  toggle.setAttribute("aria-expanded", String(open));
+  document.body.classList.toggle("nav-open", open);
+  if (scrim) scrim.hidden = !open;
+}
+
 if (toggle && nav) {
   toggle.addEventListener("click", () => {
-    const open = nav.classList.toggle("open");
-    toggle.setAttribute("aria-expanded", String(open));
+    setMenu(!nav.classList.contains("open"));
   });
 
   nav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      nav.classList.remove("open");
-      toggle.setAttribute("aria-expanded", "false");
-    });
+    link.addEventListener("click", () => setMenu(false));
+  });
+
+  scrim?.addEventListener("click", () => setMenu(false));
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setMenu(false);
   });
 }
 
