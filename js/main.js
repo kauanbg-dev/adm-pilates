@@ -1,8 +1,6 @@
 const toggle = document.querySelector(".nav-toggle");
 const nav = document.querySelector(".site-nav");
 const scrim = document.querySelector("#nav-scrim");
-const form = document.querySelector("#form-aula");
-const statusEl = document.querySelector(".form-status");
 
 function setMenu(open) {
   if (!toggle || !nav) return;
@@ -28,23 +26,8 @@ if (toggle && nav) {
   });
 }
 
-if (form && statusEl) {
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    if (!form.checkValidity()) {
-      statusEl.textContent = "Preencha nome, e-mail, telefone e o tipo de aula.";
-      form.reportValidity();
-      return;
-    }
-
-    statusEl.textContent = "Pedido enviado. Retornamos em até um dia útil.";
-    form.reset();
-  });
-}
-
 const revealTargets = document.querySelectorAll(
-  ".hero-copy, .hero-logo, .about-photo, .section-head, .card, .shot, .person, .contact-form, .map-shell, .contact-social, .strip p"
+  ".hero-copy, .hero-logo, .about-photo, .section-head, .card, .shot, .person, .map-shell, .local-aside, .contact-social, .strip p"
 );
 revealTargets.forEach((el, i) => {
   el.classList.add("reveal");

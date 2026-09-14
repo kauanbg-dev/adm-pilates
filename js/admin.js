@@ -24,6 +24,27 @@ const titles = {
   equipe: ["Instrutores", "Quem conduz as aulas"],
 };
 
+const PAYMENT_METHODS = [
+  { value: "", label: "Não informado" },
+  { value: "pix", label: "PIX" },
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "cartao", label: "Cartão" },
+  { value: "transferencia", label: "Transferência" },
+  { value: "outro", label: "Outro" },
+];
+
+function paymentMethodLabel(value) {
+  return PAYMENT_METHODS.find((m) => m.value === value)?.label || "";
+}
+
+function paymentMethodOptions(selected) {
+  const current = selected || "";
+  return PAYMENT_METHODS.map(
+    (m) =>
+      `<option value="${escapeAttr(m.value)}" ${m.value === current ? "selected" : ""}>${escapeHtml(m.label)}</option>`
+  ).join("");
+}
+
 function emptyStudio() {
   return { instructors: [], plans: [], clients: [], appointments: [], transactions: [], modalities: [], times: [], classPrice: 80 };
 }
@@ -224,16 +245,20 @@ function chargeAppointment(apt) {
   const price = Studio.classPrice(db);
   if (!(price > 0)) return false;
   if (db.transactions.some((t) => t.appointmentId === apt.id)) return false;
+  const client = apt.clientId ? Studio.client(db, apt.clientId) : null;
+  const paymentMethod = client?.paymentMethod || "";
+  const payLabel = paymentMethodLabel(paymentMethod);
   db.transactions.push({
     id: uid("fin"),
     type: "receita",
     category: "Aula",
-    description: `Aula · ${personLabel(apt)} · ${formatDate(apt.date)} ${apt.time}`,
+    description: `Aula · ${personLabel(apt)} · ${formatDate(apt.date)} ${apt.time}${payLabel ? ` · ${payLabel}` : ""}`,
     amount: price,
     date: apt.date,
     status: "pendente",
     clientId: apt.clientId || "",
     appointmentId: apt.id,
+    paymentMethod,
   });
   return true;
 }
@@ -422,7 +447,8 @@ function filteredClients() {
       !q ||
       c.name.toLowerCase().includes(q) ||
       (c.email || "").toLowerCase().includes(q) ||
-      (c.phone || "").includes(q);
+      (c.phone || "").includes(q) ||
+      paymentMethodLabel(c.paymentMethod).toLowerCase().includes(q);
     const st = clientFilter === "todos" || c.status === clientFilter;
     return hit && st;
   });
@@ -446,6 +472,7 @@ function renderClients() {
           <tr>
             <th>Aluno</th>
             <th>Instrutor</th>
+            <th>Pagamento</th>
             <th>Status</th>
             <th>Início</th>
             <th></th>
@@ -460,6 +487,7 @@ function renderClients() {
             <tr>
               <td data-label="Aluno">${escapeHtml(c.name)}<br /><span class="muted">${escapeHtml([c.email, c.phone].filter(Boolean).join(" · ") || "Sem e-mail ou WhatsApp")}</span></td>
               <td data-label="Instrutor">${escapeHtml(instructorName(c.instructorId))}</td>
+              <td data-label="Pagamento">${escapeHtml(paymentMethodLabel(c.paymentMethod) || "—")}</td>
               <td data-label="Status">${statusChip(c.status)}</td>
               <td data-label="Início">${formatDate(c.startedAt)}</td>
               <td class="td-actions">
@@ -474,7 +502,7 @@ function renderClients() {
             </tr>`
                   )
                   .join("")
-              : `<tr><td colspan="5">Nenhum aluno encontrado.</td></tr>`
+              : `<tr><td colspan="6">Nenhum aluno encontrado.</td></tr>`
           }
         </tbody>
       </table>
@@ -490,6 +518,7 @@ function clientForm(c) {
     phone: "",
     instructorId: db.instructors[0]?.id || "",
     notes: "",
+    paymentMethod: "",
     status: "ativo",
     startedAt: todayIso(),
   };
@@ -503,7 +532,7 @@ function clientForm(c) {
           .map((i) => `<option value="${escapeAttr(i.id)}" ${i.id === value.instructorId ? "selected" : ""}>${escapeHtml(i.name)}</option>`)
           .join("")}</select>
       </label>
-      <p class="muted">E-mail e WhatsApp são opcionais.</p>
+      <p class="muted">E-mail, WhatsApp e forma de pagamento são opcionais.</p>
       <div class="row-2">
         <label>E-mail
           <input type="email" name="email" autocomplete="email" inputmode="email" placeholder="Opcional" value="${escapeAttr(value.email)}" />
@@ -512,6 +541,10 @@ function clientForm(c) {
           <input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="Opcional" value="${escapeAttr(value.phone)}" />
         </label>
       </div>
+      <label>Pagamento da aula
+        <select name="paymentMethod">${paymentMethodOptions(value.paymentMethod)}</select>
+      </label>
+      <p class="muted">Como a pessoa costuma pagar a aula, se quiser registrar. Não é obrigatório.</p>
       <label>Observações clínicas / objetivas
         <textarea name="notes" rows="3">${escapeHtml(value.notes || "")}</textarea>
       </label>
@@ -530,6 +563,7 @@ function openNewClient() {
       phone: String(fd.get("phone") || "").trim(),
       instructorId: String(fd.get("instructorId") || ""),
       notes: String(fd.get("notes") || "").trim(),
+      paymentMethod: String(fd.get("paymentMethod") || "").trim(),
       status: "ativo",
       startedAt: todayIso(),
     };
@@ -578,6 +612,7 @@ function openEditClient(id) {
     c.phone = String(fd.get("phone") || "").trim();
     c.instructorId = instructorId;
     c.notes = String(fd.get("notes") || "").trim();
+    c.paymentMethod = String(fd.get("paymentMethod") || "").trim();
     persist();
     closeModal();
     render();
@@ -955,7 +990,7 @@ function renderFinance() {
                     (t) => `<tr>
               <td data-label="Data">${formatDate(t.date)}</td>
               <td data-label="Tipo">${t.type === "receita" ? "Receita" : "Despesa"}</td>
-              <td data-label="Descrição">${escapeHtml(t.description)}<br /><span class="muted">${escapeHtml(t.category)}</span></td>
+              <td data-label="Descrição">${escapeHtml(t.description)}<br /><span class="muted">${escapeHtml([t.category, paymentMethodLabel(t.paymentMethod)].filter(Boolean).join(" · "))}</span></td>
               <td data-label="Valor">${money(t.amount)}</td>
               <td data-label="Status">${statusChip(t.status)}</td>
               <td class="td-actions">
