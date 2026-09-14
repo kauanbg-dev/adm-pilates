@@ -238,10 +238,13 @@ a {
 }
 
 .hero-logo {
-  background: var(--white);
+  background: transparent;
   display: grid;
   place-items: center;
-  padding: 2.5rem;
+  padding: 0;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
 }
 
 .hero-logo img {
@@ -250,6 +253,10 @@ a {
   width: min(100%, 420px);
   object-fit: contain;
   animation: floaty 5.5s ease-in-out infinite;
+}
+
+.hero-media.hero-logo img {
+  height: auto;
 }
 
 @keyframes floaty {
@@ -846,9 +853,10 @@ textarea {
 
   .hero-logo {
     order: -1;
-    padding: 1.1rem;
-    border-radius: 24px;
-    box-shadow: 0 12px 28px rgba(15, 104, 100, 0.1);
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
   }
 
   .hero-copy {
@@ -1195,9 +1203,10 @@ textarea {
 
 .admin-side .logo img {
   width: 120px;
-  background: var(--white);
-  border-radius: 14px;
-  padding: 0.4rem;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  filter: drop-shadow(0 1px 10px rgba(255, 255, 255, 0.4));
 }
 
 .side-label {
@@ -1691,7 +1700,8 @@ textarea {
 
   .admin-side .logo img {
     width: 64px;
-    padding: 0.15rem;
+    padding: 0;
+    background: transparent;
   }
 
   .agenda-desktop {
