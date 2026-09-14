@@ -1,4 +1,18 @@
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const MONTHS_PT = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
 
 const titles = {
   inicio: ["Painel", "Como está o estúdio hoje"],
@@ -45,12 +59,25 @@ function todayIso() {
   return isoDay(new Date());
 }
 
+function mondayOfDate(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = (d.getDay() + 6) % 7;
+  return addDays(d, -day);
+}
+
 function mondayOf(offsetWeeks) {
-  const now = new Date();
-  const day = (now.getDay() + 6) % 7;
-  const monday = addDays(now, -day + offsetWeeks * 7);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
+  return addDays(mondayOfDate(new Date()), offsetWeeks * 7);
+}
+
+function weekOffsetForDate(date) {
+  const currentMonday = mondayOf(0);
+  const targetMonday = mondayOfDate(date);
+  return Math.round((targetMonday.getTime() - currentMonday.getTime()) / (7 * 24 * 60 * 60 * 1000));
+}
+
+function parseAgendaDate(iso) {
+  return new Date(`${iso}T12:00:00`);
 }
 
 function weekDays() {
@@ -59,6 +86,81 @@ function weekDays() {
     const d = addDays(monday, i);
     return { date: isoDay(d), label: WEEKDAYS[i], pretty: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) };
   });
+}
+
+function agendaMonthYear(days = weekDays()) {
+  const counts = new Map();
+  let best = parseAgendaDate(days[0].date);
+  let bestN = 0;
+  days.forEach((item) => {
+    const dt = parseAgendaDate(item.date);
+    const key = `${dt.getFullYear()}-${dt.getMonth()}`;
+    const n = (counts.get(key) || 0) + 1;
+    counts.set(key, n);
+    if (n > bestN) {
+      bestN = n;
+      best = dt;
+    }
+  });
+  return { year: best.getFullYear(), month: best.getMonth() };
+}
+
+function agendaYearOptions(focusYear) {
+  const now = new Date().getFullYear();
+  let min = now - 2;
+  let max = now + 2;
+  (db.appointments || []).forEach((a) => {
+    const y = Number(String(a.date || "").slice(0, 4));
+    if (y) {
+      min = Math.min(min, y);
+      max = Math.max(max, y);
+    }
+  });
+  min = Math.min(min, focusYear);
+  max = Math.max(max, focusYear);
+  const years = [];
+  for (let y = min; y <= max; y += 1) years.push(y);
+  return years;
+}
+
+function weekRangeLabel(days) {
+  const start = parseAgendaDate(days[0].date);
+  const end = parseAgendaDate(days[5].date);
+  const startMonth = MONTHS_PT[start.getMonth()].toLowerCase();
+  const endMonth = MONTHS_PT[end.getMonth()].toLowerCase();
+  if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+    return `${start.getDate()} a ${end.getDate()} de ${endMonth} de ${end.getFullYear()}`;
+  }
+  if (start.getFullYear() === end.getFullYear()) {
+    return `${start.getDate()} de ${startMonth} a ${end.getDate()} de ${endMonth} de ${end.getFullYear()}`;
+  }
+  return `${start.getDate()} de ${startMonth} de ${start.getFullYear()} a ${end.getDate()} de ${endMonth} de ${end.getFullYear()}`;
+}
+
+function goToMonth(year, monthIndex) {
+  const now = new Date();
+  if (year === now.getFullYear() && monthIndex === now.getMonth()) {
+    weekOffset = 0;
+    agendaDayIndex = Math.min(5, (now.getDay() + 6) % 7);
+    return;
+  }
+  const first = new Date(year, monthIndex, 1);
+  first.setHours(0, 0, 0, 0);
+  const weekday = (first.getDay() + 6) % 7;
+  const start = weekday === 6 ? addDays(first, 1) : first;
+  weekOffset = weekOffsetForDate(start);
+  const days = weekDays();
+  const idx = days.findIndex((d) => {
+    const dt = parseAgendaDate(d.date);
+    return dt.getFullYear() === year && dt.getMonth() === monthIndex;
+  });
+  agendaDayIndex = idx >= 0 ? idx : 0;
+}
+
+function shiftAgendaMonth(delta) {
+  const { year, month } = agendaMonthYear();
+  const next = new Date(year, month + delta, 1);
+  goToMonth(next.getFullYear(), next.getMonth());
 }
 
 function persist() {
@@ -518,16 +620,35 @@ function renderAgenda() {
   const days = weekDays();
   if (agendaDayIndex > days.length - 1) agendaDayIndex = 0;
   const day = days[agendaDayIndex];
-  const monday = days[0].pretty;
-  const saturday = days[5].pretty;
+  const { year, month } = agendaMonthYear(days);
+  const years = agendaYearOptions(year);
   const times = classTimes();
   root.innerHTML = `
     <div class="toolbar agenda-toolbar">
-      <button class="btn btn-ghost-dark" type="button" data-action="semana-prev" aria-label="Semana anterior">←</button>
-      <strong class="agenda-range">${monday} — ${saturday}</strong>
-      <button class="btn btn-ghost-dark" type="button" data-action="semana-next" aria-label="Próxima semana">→</button>
-      <button class="btn btn-ghost-dark agenda-hoje" type="button" data-action="semana-hoje">Hoje</button>
+      <div class="agenda-jump">
+        <button class="btn btn-ghost-dark" type="button" data-action="mes-prev" aria-label="Mês anterior">‹</button>
+        <label class="agenda-select">
+          <span class="sr-only">Mês</span>
+          <select id="agenda-mes" aria-label="Mês">
+            ${MONTHS_PT.map((name, i) => `<option value="${i}" ${i === month ? "selected" : ""}>${name}</option>`).join("")}
+          </select>
+        </label>
+        <label class="agenda-select">
+          <span class="sr-only">Ano</span>
+          <select id="agenda-ano" aria-label="Ano">
+            ${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}
+          </select>
+        </label>
+        <button class="btn btn-ghost-dark" type="button" data-action="mes-next" aria-label="Próximo mês">›</button>
+      </div>
+      <div class="agenda-week-nav">
+        <button class="btn btn-ghost-dark" type="button" data-action="semana-prev" aria-label="Semana anterior">←</button>
+        <strong class="agenda-range">${weekRangeLabel(days)}</strong>
+        <button class="btn btn-ghost-dark" type="button" data-action="semana-next" aria-label="Próxima semana">→</button>
+        <button class="btn btn-ghost-dark agenda-hoje" type="button" data-action="semana-hoje">Hoje</button>
+      </div>
     </div>
+    <p class="muted agenda-hint">Escolha o mês e o ano para pular a data, ou use as setas para ir semana a semana.</p>
     <div class="agenda-desktop">
       <p class="muted">Clique em um horário para agendar ou editar.</p>
       <div class="agenda-wrap">
@@ -1422,6 +1543,14 @@ root.addEventListener("click", (e) => {
     weekOffset += 1;
     render();
   }
+  if (a === "mes-prev") {
+    shiftAgendaMonth(-1);
+    render();
+  }
+  if (a === "mes-next") {
+    shiftAgendaMonth(1);
+    render();
+  }
   if (a === "semana-hoje") {
     weekOffset = 0;
     agendaDayIndex = Math.min(5, (new Date().getDay() + 6) % 7);
@@ -1506,6 +1635,16 @@ root.addEventListener("change", (e) => {
   if (e.target.id === "filtro-fin") {
     financeFilter = e.target.value;
     render();
+  }
+  if (e.target.id === "agenda-mes" || e.target.id === "agenda-ano") {
+    const monthEl = document.querySelector("#agenda-mes");
+    const yearEl = document.querySelector("#agenda-ano");
+    const month = Number(monthEl?.value);
+    const year = Number(yearEl?.value);
+    if (Number.isInteger(month) && Number.isInteger(year)) {
+      goToMonth(year, month);
+      render();
+    }
   }
 });
 
