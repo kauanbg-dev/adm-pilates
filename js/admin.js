@@ -20,7 +20,7 @@ const titles = {
   agenda: ["Agenda", "Agende, edite, remova e marque aula experimental"],
   financeiro: ["Financeiro", "Aulas, despesas e caixa do mês"],
   valor: ["Valor", "Um único valor por aula"],
-  aulas: ["Aulas", "Formas de aula, vagas, duração e horários da grade"],
+  aulas: ["Aulas", "Formas de aula, duração e horários da grade"],
   equipe: ["Instrutores", "Quem conduz as aulas"],
 };
 
@@ -699,13 +699,6 @@ function renderAgenda() {
                 ${days
                   .map((d) => {
                     const items = db.appointments.filter((a) => a.date === d.date && a.time === time && a.status !== "cancelado");
-                    const byMod = {};
-                    items.forEach((a) => {
-                      byMod[a.modality] = (byMod[a.modality] || 0) + 1;
-                    });
-                    const occ = Object.entries(byMod)
-                      .map(([mod, n]) => `${mod} ${n}/${Studio.maxFor(db, mod)}`)
-                      .join(" · ");
                     return `<td>
                       <button class="slot" type="button" data-action="slot" data-date="${escapeAttr(d.date)}" data-time="${escapeAttr(time)}">
                         ${
@@ -718,7 +711,6 @@ function renderAgenda() {
                                 .join("")
                             : `<span class="muted">Livre</span>`
                         }
-                        ${occ ? `<span class="slot-occ">${escapeHtml(occ)}</span>` : ""}
                       </button>
                     </td>`;
                   })
@@ -840,12 +832,6 @@ function trySaveAppointment(data, statusEl, exceptId) {
     }
   } else if (!client && !guest) {
     statusEl.textContent = "Na experimental, escolha um cadastro ou informe o nome do visitante.";
-    return false;
-  }
-
-  const occupied = Studio.occupancy(db, data.date, data.time, data.modality, exceptId);
-  if (occupied >= Studio.maxFor(db, data.modality)) {
-    statusEl.textContent = `Turma lotada neste horário (${Studio.maxFor(db, data.modality)} vagas de ${data.modality}).`;
     return false;
   }
 
@@ -1297,13 +1283,13 @@ function renderAulas() {
   root.innerHTML = `
     <section class="panel" style="margin-bottom:1.2rem">
       <h2>Formas de aula</h2>
-      <p class="muted">Nome, vagas por horário e duração. Isso vale na agenda.</p>
+      <p class="muted">Nome e duração. Isso vale na agenda.</p>
       <div class="cards admin-cards">
         ${(db.modalities || [])
           .map(
             (m) => `<article class="card">
               <h3>${escapeHtml(m.name)}</h3>
-              <p>${m.capacity} vagas · ${m.duration} min</p>
+              <p>${m.duration} min</p>
               <p>${m.active ? statusChip("ativo") : statusChip("inativo")}</p>
               <div class="inline-actions">
                 <button class="linkish" type="button" data-action="editar-modalidade" data-id="${escapeAttr(m.id)}">Editar</button>
@@ -1341,16 +1327,13 @@ function renderAulas() {
 }
 
 function openModality(existing) {
-  const m = existing || { name: "", capacity: 4, duration: 50, active: true };
+  const m = existing || { name: "", duration: 50, active: true };
   openModal(
     existing ? "Editar forma de aula" : "Nova forma de aula",
     `
     <form id="form-mod" class="contact-form nested">
       <label>Nome <input name="name" required value="${escapeAttr(m.name)}" placeholder="Ex.: Cadillac, Solo avançado" /></label>
-      <div class="row-2">
-        <label>Vagas por horário <input name="capacity" type="number" min="1" max="20" required value="${escapeAttr(m.capacity)}" /></label>
-        <label>Duração (min) <input name="duration" type="number" min="15" max="120" required value="${escapeAttr(m.duration)}" /></label>
-      </div>
+      <label>Duração (min) <input name="duration" type="number" min="15" max="120" required value="${escapeAttr(m.duration)}" /></label>
       ${
         existing
           ? `<label>Situação
@@ -1369,7 +1352,6 @@ function openModality(existing) {
     const name = String(fd.get("name")).trim();
     const data = {
       name,
-      capacity: Number(fd.get("capacity")),
       duration: Number(fd.get("duration")),
       active: existing ? fd.get("active") === "sim" : true,
     };
@@ -1381,6 +1363,7 @@ function openModality(existing) {
     if (existing) {
       const oldName = existing.name;
       Object.assign(existing, data);
+      delete existing.capacity;
       if (oldName !== name) {
         db.appointments.forEach((a) => {
           if (a.modality === oldName) a.modality = name;

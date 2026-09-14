@@ -76,10 +76,10 @@ function New-SeedStudio {
       @{ id = 'fin_8'; type = 'despesa'; category = 'Material'; description = 'Faixas e bolas'; amount = 340; date = $lastMonth; status = 'pago' }
     )
     modalities = @(
-      @{ id = 'mod_solo'; name = 'Solo'; capacity = 6; duration = 50; active = $true }
-      @{ id = 'mod_reformer'; name = 'Reformer'; capacity = 4; duration = 50; active = $true }
-      @{ id = 'mod_terapeutico'; name = 'Terapêutico'; capacity = 2; duration = 45; active = $true }
-      @{ id = 'mod_prenatal'; name = 'Pré-natal'; capacity = 4; duration = 45; active = $true }
+      @{ id = 'mod_solo'; name = 'Solo'; duration = 50; active = $true }
+      @{ id = 'mod_reformer'; name = 'Reformer'; duration = 50; active = $true }
+      @{ id = 'mod_terapeutico'; name = 'Terapêutico'; duration = 45; active = $true }
+      @{ id = 'mod_prenatal'; name = 'Pré-natal'; duration = 45; active = $true }
     )
     times = @('07:00', '08:00', '09:00', '12:00', '18:00', '19:00')
   }
