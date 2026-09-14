@@ -91,12 +91,8 @@ const Studio = {
   },
 
   async login(email, password) {
-    try {
-      const data = await api("/api/login", { method: "POST", body: { email, password } });
-      return data.user;
-    } catch {
-      return null;
-    }
+    const data = await api("/api/login", { method: "POST", body: { email, password } });
+    return data.user;
   },
 
   async logout() {
