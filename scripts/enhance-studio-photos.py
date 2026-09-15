@@ -44,9 +44,9 @@ def enhance(path, crop, max_side, warm=0.04):
 
 jobs = [
     (
-        "795f38d2-87c4-4636-9b81-5482f9365ac5.png",
+        "e4616c12-1e91-417c-ae8e-afc9919e1f5d.png",
         "estudio-sala.jpg",
-        (0.0, 0.03, 0.99, 0.98),
+        (0.0, 0.02, 1.0, 0.99),
         1800,
     ),
     (
