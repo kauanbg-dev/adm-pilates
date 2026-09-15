@@ -1,11 +1,11 @@
-import "./lib/env.js";
+import "../lib/env.js";
 import { createServer } from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import handler from "./api/index.js";
+import handler from "../api/index.js";
 
-const root = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = Number(process.env.PORT || 8780);
 
 const types = {
