@@ -1,8 +1,10 @@
 {
+  "framework": null,
   "rewrites": [
     { "source": "/painel", "destination": "/admin.html" },
     { "source": "/data/:path*", "destination": "/404.html" },
     { "source": "/lib/:path*", "destination": "/404.html" },
+    { "source": "/scripts/:path*", "destination": "/404.html" },
     { "source": "/api/:path*", "destination": "/api" }
   ]
 }
