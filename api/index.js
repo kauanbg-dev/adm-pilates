@@ -117,6 +117,12 @@ export default async function handler(req, res) {
         signIn(res, envUser);
         return;
       }
+      if (!envLoginAccounts().length) {
+        send(res, 503, {
+          error: "Login não configurado neste site. Coloque ADMIN_EMAIL, ADMIN_PASSWORD, ALEX_EMAIL e ALEX_PASSWORD nas variáveis da Vercel.",
+        });
+        return;
+      }
       try {
         const user = await findUser(email);
         if (!user || !verifyPassword(password.trim(), user.salt, user.passwordHash)) {
@@ -126,7 +132,7 @@ export default async function handler(req, res) {
         signIn(res, user);
       } catch (err) {
         console.error(err);
-        send(res, 500, { error: "Login indisponível. Confira e-mail e senha no arquivo .env." });
+        send(res, 500, { error: "Login indisponível. Confira e-mail e senha no arquivo .env ou nas variáveis da Vercel." });
       }
       return;
     }
