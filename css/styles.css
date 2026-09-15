@@ -1302,6 +1302,58 @@ textarea {
   padding: 1.75rem 1.5rem 1.6rem;
   border-radius: 24px;
   box-shadow: 0 24px 50px rgba(15, 104, 100, 0.18);
+  background: #fff;
+  color: #222;
+  color-scheme: light;
+}
+
+.login-field {
+  color: #222;
+  font-weight: 600;
+}
+
+.login-card input[type="email"],
+.login-card input[type="password"],
+.login-card input[type="text"] {
+  background: #fff;
+  color: #111;
+  -webkit-text-fill-color: #111;
+  caret-color: #111;
+  border: 2px solid #0f6864;
+  min-height: 48px;
+  opacity: 1;
+}
+
+.login-card input::placeholder {
+  color: #5b5b5b;
+  -webkit-text-fill-color: #5b5b5b;
+  opacity: 1;
+}
+
+.login-card input:-webkit-autofill,
+.login-card input:-webkit-autofill:hover,
+.login-card input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #111;
+  box-shadow: 0 0 0 1000px #fff inset;
+  transition: background-color 9999s ease-out;
+}
+
+.login-show-pass {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #222;
+  cursor: pointer;
+}
+
+.login-show-pass input {
+  width: 1.1rem;
+  height: 1.1rem;
+  min-height: 0;
+  padding: 0;
+  accent-color: #0f6864;
 }
 
 .admin-login .login-card h1 {

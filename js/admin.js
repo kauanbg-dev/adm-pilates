@@ -1474,6 +1474,12 @@ function escapeAttr(str) {
   return escapeHtml(str).replace(/'/g, "&#39;");
 }
 
+document.querySelector("#toggle-password")?.addEventListener("change", (e) => {
+  const input = document.querySelector("#login-password");
+  if (!input) return;
+  input.type = e.target.checked ? "text" : "password";
+});
+
 document.querySelector("#form-admin-login")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
