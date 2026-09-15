@@ -3,3 +3,5 @@ data/
 .env
 *.log
 docs/security-audit/_charts/
+.vercel
+.env*
