@@ -3,3 +3,6 @@ data
 .git
 *.ps1
 schema.sql
+server.mjs
+scripts
+docs
