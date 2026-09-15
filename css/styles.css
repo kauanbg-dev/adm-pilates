@@ -470,14 +470,29 @@ a {
   top: 0.85rem;
 }
 
+.about-photo {
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
 .about-photo img {
   width: 100%;
   aspect-ratio: 4 / 3;
   height: auto;
   object-fit: cover;
-  object-position: 50% 42%;
+  object-position: 48% 58%;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  transform: scale(1.06);
+  transition: transform 1.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.about-photo.is-visible img {
+  transform: scale(1);
+}
+
+.about-photo:hover img {
+  transform: scale(1.04);
 }
 
 .about-photo figcaption {
@@ -568,38 +583,48 @@ body:not(.admin-body) .person:hover {
   margin-bottom: 1rem;
 }
 
-.gallery-logo {
+.gallery-bento {
   display: grid;
-  place-items: center;
-  min-height: 280px;
-  padding: 2rem 1rem;
+  grid-template-columns: 1.25fr 1fr 0.9fr;
+  grid-template-rows: minmax(200px, 28vw) minmax(180px, 22vw);
+  gap: 0.9rem;
 }
 
-.gallery-logo img {
-  width: min(100%, 360px);
-  height: auto;
-  display: block;
-}
-
-.gallery-grid .shot {
+.gallery-bento .shot {
   margin: 0;
   overflow: hidden;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   min-width: 0;
-  aspect-ratio: 4 / 3;
+  min-height: 0;
+  height: 100%;
 }
 
-.gallery-grid .shot img {
+.gallery-bento .shot-featured {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.gallery-bento .shot-tall {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+.gallery-bento .shot img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.7s ease;
+  transform: scale(1.08);
+  transition: transform 1.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.gallery-grid .shot:hover img {
-  transform: scale(1.04);
+.gallery-bento .shot.is-visible img {
+  transform: scale(1);
+}
+
+.gallery-bento .shot:hover img {
+  transform: scale(1.05);
 }
 
 .shot-cadillac img {
@@ -797,10 +822,16 @@ address {
   }
 
   .hero-logo img,
-  .gallery-grid .shot img,
+  .gallery-bento .shot img,
+  .about-photo img,
   .btn {
     animation: none;
     transition: none;
+  }
+
+  .about-photo img,
+  .gallery-bento .shot img {
+    transform: none;
   }
 }
 
@@ -1039,7 +1070,6 @@ textarea {
   .cards,
   .class-grid,
   .team-grid,
-  .gallery-grid,
   .row-2 {
     grid-template-columns: 1fr;
   }
@@ -1106,17 +1136,29 @@ textarea {
     justify-content: stretch;
   }
 
-  .gallery-grid {
+  .gallery-bento {
     grid-template-columns: 1fr 1fr;
-    grid-auto-rows: auto;
+    grid-template-rows: none;
     gap: 0.65rem;
   }
 
-  .shot-cadillac,
-  .shot-estudio,
-  .shot-recepcao,
-  .shot-aluno {
-    aspect-ratio: 4 / 5;
+  .gallery-bento .shot-featured {
+    grid-column: 1 / span 2;
+    grid-row: auto;
+    aspect-ratio: 16 / 10;
+    height: auto;
+  }
+
+  .gallery-bento .shot-tall {
+    grid-column: auto;
+    grid-row: auto;
+    aspect-ratio: 3 / 4;
+    height: auto;
+  }
+
+  .gallery-bento .shot:not(.shot-featured):not(.shot-tall) {
+    aspect-ratio: 4 / 3;
+    height: auto;
   }
 
   .local-layout {
@@ -2296,7 +2338,8 @@ body.nav-open .whatsapp-fab {
     box-shadow: none;
   }
 
-  .gallery-grid .shot:hover img {
+  .gallery-bento .shot:hover img,
+  .about-photo:hover img {
     transform: none;
   }
 }
