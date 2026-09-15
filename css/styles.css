@@ -568,10 +568,17 @@ body:not(.admin-body) .person:hover {
   margin-bottom: 1rem;
 }
 
-.gallery-grid {
+.gallery-logo {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.9rem;
+  place-items: center;
+  min-height: 280px;
+  padding: 2rem 1rem;
+}
+
+.gallery-logo img {
+  width: min(100%, 360px);
+  height: auto;
+  display: block;
 }
 
 .gallery-grid .shot {
