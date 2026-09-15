@@ -11,17 +11,25 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Outfit:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css?v=25" />
+    <link rel="stylesheet" href="css/styles.css?v=29" />
   </head>
   <body class="admin-body">
-    <div id="login-screen" class="admin-login" hidden>
+    <div id="login-screen" class="admin-login">
       <form id="form-admin-login" class="contact-form login-card" novalidate>
         <img class="login-logo" src="img/logo-pilates.png?v=3" alt="Pratique + Pilates" />
         <p class="eyebrow">Equipe</p>
         <h1>Painel do estúdio</h1>
         <p class="muted">Entre com o e-mail e a senha.</p>
-        <label>E-mail <input type="email" name="email" required autocomplete="username" /></label>
-        <label>Senha <input type="password" name="password" required autocomplete="current-password" /></label>
+        <label class="login-field">E-mail
+          <input type="email" name="email" required autocomplete="username" placeholder="E-mail" />
+        </label>
+        <label class="login-field">Senha
+          <input id="login-password" type="password" name="password" required autocomplete="current-password" placeholder="Senha" />
+        </label>
+        <label class="login-show-pass">
+          <input id="toggle-password" type="checkbox" />
+          Mostrar senha
+        </label>
         <button class="btn btn-primary" type="submit">Entrar</button>
         <p class="form-status" id="login-status" role="status"></p>
       </form>
@@ -70,6 +78,6 @@
     </div>
 
     <script src="js/studio-store.js?v=7"></script>
-    <script src="js/admin.js?v=18"></script>
+    <script src="js/admin.js?v=19"></script>
   </body>
 </html>
