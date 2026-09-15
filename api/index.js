@@ -1,4 +1,4 @@
-import "../lib/env.js";
+import { loadEnv } from "../lib/env.js";
 import { envLoginAccounts, matchEnvLogin } from "../lib/accounts.js";
 import { cookieHeader, parseCookie, readSession, signSession, verifyPassword } from "../lib/auth.js";
 import { mergeStudioWrite, studioForClient } from "../lib/permissions.js";
@@ -103,32 +103,31 @@ export default async function handler(req, res) {
         send(res, 429, { error: "Muitas tentativas. Espere alguns minutos." });
         return;
       }
+      loadEnv({ override: true });
       const body = await readJson(req);
       const email = String(body.email || "");
       const password = String(body.password || "");
-      const envUser = matchEnvLogin(email, password);
-      if (envUser) {
-        try {
-          await initStore();
-        } catch (err) {
-          console.error(err);
-        }
-        signIn(res, envUser);
-        return;
-      }
       try {
         await initStore();
       } catch (err) {
         console.error(err);
-        send(res, 500, { error: "Login indisponível. Confira e-mail e senha no ambiente." });
+      }
+      const envUser = matchEnvLogin(email, password);
+      if (envUser) {
+        signIn(res, envUser);
         return;
       }
-      const user = await findUser(email);
-      if (!user || !verifyPassword(password.trim(), user.salt, user.passwordHash)) {
-        send(res, 401, { error: "E-mail ou senha incorretos." });
-        return;
+      try {
+        const user = await findUser(email);
+        if (!user || !verifyPassword(password.trim(), user.salt, user.passwordHash)) {
+          send(res, 401, { error: "E-mail ou senha incorretos." });
+          return;
+        }
+        signIn(res, user);
+      } catch (err) {
+        console.error(err);
+        send(res, 500, { error: "Login indisponível. Confira e-mail e senha no arquivo .env." });
       }
-      signIn(res, user);
       return;
     }
 

@@ -372,6 +372,8 @@ function Handle-Api($Req, $Res) {
   $cookieOut = $null
 
   if ($path -eq '/api/login' -and $method -eq 'POST') {
+    Import-DotEnv
+    Initialize-Store
     $body = (Get-JsSer).DeserializeObject((Read-BodyText $Req))
     $email = ''
     $password = ''
