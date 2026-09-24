@@ -1427,6 +1427,20 @@ textarea {
   margin: 0 auto 0.5rem;
 }
 
+.btn-install-app {
+  width: 100%;
+  margin-top: 0.65rem;
+  min-height: 48px;
+  background: transparent;
+  color: var(--sage-dark);
+  border: 2px solid var(--sage-dark);
+  font-weight: 600;
+}
+
+.btn-install-app:hover {
+  background: var(--mint);
+}
+
 .admin-shell {
   display: grid;
   grid-template-columns: 250px 1fr;

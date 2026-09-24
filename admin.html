@@ -5,13 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Painel do estúdio | Pratique + Pilates</title>
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0f6864" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Pilates ADM" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/img/icons/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Outfit:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css?v=29" />
+    <link rel="stylesheet" href="css/styles.css?v=33" />
   </head>
   <body class="admin-body">
     <div id="login-screen" class="admin-login">
@@ -31,6 +39,9 @@
           Mostrar senha
         </label>
         <button class="btn btn-primary" type="submit">Entrar</button>
+        <button class="btn btn-install-app" id="btn-install-app" type="button" hidden>
+          Instalar app no Chrome
+        </button>
         <p class="form-status" id="login-status" role="status"></p>
       </form>
     </div>
@@ -79,5 +90,6 @@
 
     <script src="js/studio-store.js?v=7"></script>
     <script src="js/admin.js?v=19"></script>
+    <script src="js/pwa-install.js?v=1"></script>
   </body>
 </html>
