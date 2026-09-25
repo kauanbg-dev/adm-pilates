@@ -1,17 +1,17 @@
-# Pratique + Pilates (painel)
+# Pratique + Pilates — painel admin
 
-Site do estúdio + painel admin pra agenda, alumas e conteúdo.
+Painel do estúdio: agenda, alunas e conteúdo. O site público fica no repo [pratique-pilates](https://github.com/kauanbg-dev/pratique-pilates).
 
-- **Site público:** `index.html` → [pratique-pilates.vercel.app](https://pratique-pilates.vercel.app/) (repo `pratique-pilates`)
-- **Painel:** `admin.html` → [adm-pratique-pilates.vercel.app](https://adm-pratique-pilates.vercel.app/)
+- **Site:** [pratique-pilates.vercel.app](https://pratique-pilates.vercel.app/)
+- **Painel:** [adm-pratique-pilates.vercel.app](https://adm-pratique-pilates.vercel.app/)
 
 ## Stack
 
-- HTML / CSS / JS
-- API na Vercel (`/api`)
-- Postgres (Neon)
+- HTML, CSS e JavaScript
+- API serverless na Vercel (`/api`)
+- PostgreSQL (Neon)
 
-## Rodar
+## Como rodar
 
 ```bash
 cp .env.example .env
@@ -20,4 +20,4 @@ npm install
 npm run dev
 ```
 
-Na Vercel, as mesmas variáveis vão no projeto. Senha de exemplo do `.env.example` não passa no login de propósito.
+As mesmas variáveis vão no painel da Vercel. Os valores de exemplo do `.env.example` não autenticam de propósito.
