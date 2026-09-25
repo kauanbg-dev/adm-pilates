@@ -44,7 +44,7 @@ function New-SeedStudio {
   $studio = @{
     instructors = @(
       @{ id = 'ins_bia'; name = 'Bia'; role = 'Dona e instrutora'; specialties = 'Clássico, reformer e solo' }
-      @{ id = 'ins_alex'; name = 'Alex'; role = 'Instrutor'; specialties = 'Reformer, terapêutico e reabilitação' }
+      @{ id = 'ins_alex'; name = 'Alek'; role = 'Instrutor'; specialties = 'Reformer, terapêutico e reabilitação' }
     )
     plans = @()
     classPrice = 80
@@ -141,7 +141,7 @@ function Match-EnvLogin([string]$email, [string]$password) {
   if ($env:ALEX_PASSWORD -and $env:ALEX_PASSWORD.Trim() -ne 'escolha-uma-senha-forte-do-alex') {
     $alexEmail = 'alex@pratiquepilates.com'
     if ($env:ALEX_EMAIL) { $alexEmail = $env:ALEX_EMAIL.ToLower().Trim() }
-    $accounts += @{ email = $alexEmail; name = 'Alex'; role = 'staff'; password = $env:ALEX_PASSWORD.Trim() }
+    $accounts += @{ email = $alexEmail; name = 'Alek'; role = 'staff'; password = $env:ALEX_PASSWORD.Trim() }
   }
   foreach ($account in $accounts) {
     if ($account.email -eq $key -and (Test-SecretEqual $pass $account.password)) {
@@ -200,7 +200,7 @@ function Initialize-Store {
     $alexHash = Get-PasswordHash $env:ALEX_PASSWORD $alexSalt
     $users += @{
       email = $alexEmail
-      name = 'Alex'
+      name = 'Alek'
       role = 'staff'
       passwordHash = $alexHash
       salt = [Convert]::ToBase64String($alexSalt)
