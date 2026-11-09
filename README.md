@@ -1,4 +1,4 @@
-# Pratique + Pilates — painel admin
+# Pratique + Pilates (painel admin)
 
 Painel do estúdio: agenda, alunas e conteúdo. O site público fica no repo [pratique-pilates](https://github.com/kauanbg-dev/pratique-pilates).
 
